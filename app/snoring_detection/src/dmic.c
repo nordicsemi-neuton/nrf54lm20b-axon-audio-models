@@ -13,15 +13,18 @@
 
 #include "dmic.h"
 
+//////////////////////////////////////////////////////////////////////////////
+
 #define BLOCK_SIZE (DMIC_SAMPLE_BYTES * DMIC_PCM_RATE * SAMPLES_BLOCK_LENGTH_MS / 1000)
 
 K_MEM_SLAB_DEFINE_STATIC(dmic_mem_slab, BLOCK_SIZE, 4, 4);
+static const struct device* const dmic_dev = DEVICE_DT_GET(DT_NODELABEL(dmic_dev));
+
+//////////////////////////////////////////////////////////////////////////////
 
 int dmic_init(void)
 {
     int err;
-
-    const struct device* const dmic_dev = DEVICE_DT_GET(DT_NODELABEL(dmic_dev));
 
     if (!device_is_ready(dmic_dev))
     {
@@ -61,5 +64,22 @@ int dmic_init(void)
     return 0;
 }
 
-void free_dmic_buffer(void* buffer)
-{ k_mem_slab_free(&dmic_mem_slab, buffer); }
+//////////////////////////////////////////////////////////////////////////////
+
+int dmic_start(void)
+{
+    return dmic_trigger(dmic_dev, DMIC_TRIGGER_START);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int dmic_read_buffer(void** audio_buffer, size_t* audio_buffer_size, int32_t timeout_ms)
+{
+    return dmic_read(dmic_dev, 0, audio_buffer, audio_buffer_size, timeout_ms);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+void dmic_free_buffer(void* buffer)
+{
+    k_mem_slab_free(&dmic_mem_slab, buffer);
+}

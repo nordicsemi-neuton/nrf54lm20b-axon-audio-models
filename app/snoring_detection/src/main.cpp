@@ -16,10 +16,6 @@
 
 //////////////////////////////////////////////////////////////////////////////
 
-static const struct device* const dmic_dev = DEVICE_DT_GET(DT_NODELABEL(dmic_dev));
-
-//////////////////////////////////////////////////////////////////////////////
-
 static bool snoring_detection_postprocessing(nrf_edgeai_t* p_model);
 
 //////////////////////////////////////////////////////////////////////////////
@@ -62,7 +58,7 @@ int main()
     printk("Initialization completed!\n");
     printk("Listening Audio Environment for snoring ...\n");
 
-    err = dmic_trigger(dmic_dev, DMIC_TRIGGER_START);
+    err = dmic_start();
     __ASSERT(err == 0, "Failed to start DMIC, error code: %d", err);
 
     void*         audio_buffer;
@@ -72,7 +68,7 @@ int main()
     while (true)
     {
         // Read audio data from DMIC,
-        err = dmic_read(dmic_dev, 0, &audio_buffer, &audio_buffer_size, read_timeout);
+        err = dmic_read_buffer(&audio_buffer, &audio_buffer_size, read_timeout);
         if (err < 0)
         {
             printk("Failed to read from DMIC (err %d)", err);

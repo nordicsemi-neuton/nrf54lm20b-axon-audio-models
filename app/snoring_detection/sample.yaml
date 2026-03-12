@@ -1,6 +1,6 @@
 sample:
-  description: Snoring detection application
-  name: snoring_detection
+  description: Continuous PDM microphone snoring detection using an nRF Edge AI model with rolling confidence postprocessing and LED alert.
+  name: Snoring Detection model
 
 common:
   sysbuild: true
