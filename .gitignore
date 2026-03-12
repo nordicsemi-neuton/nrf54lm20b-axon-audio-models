@@ -1,0 +1,26 @@
+.vscode/
+*.sublime-workspace
+
+# MinGW generated files
+*.Debug
+*.Release
+
+# Python byte code
+__pycache__/
+*.pyc
+
+# Python Virtual Environments
+venv/
+
+# Binaries
+# --------
+*.dll
+*.exe
+*.bin
+
+# Other Build Artifact Directories
+# --------------------------------
+/build/
+/bin/
+obj/
+build/

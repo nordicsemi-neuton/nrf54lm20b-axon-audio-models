@@ -1,0 +1,56 @@
+AlignAfterOpenBracket: Align
+AlignConsecutiveAssignments: Consecutive
+AlignConsecutiveBitFields: Consecutive
+AlignConsecutiveDeclarations: Consecutive
+AlignConsecutiveMacros: Consecutive
+AlignEscapedNewlines: Left
+AlignOperands: Align
+AlignTrailingComments: true
+AllowAllArgumentsOnNextLine: false
+AllowAllParametersOfDeclarationOnNextLine: false
+AllowShortBlocksOnASingleLine: true
+AllowShortCaseLabelsOnASingleLine: false
+AllowShortEnumsOnASingleLine: false
+AllowShortFunctionsOnASingleLine: None
+AllowShortIfStatementsOnASingleLine: WithoutElse
+AlwaysBreakAfterDefinitionReturnType: None
+BasedOnStyle: LLVM
+BinPackArguments: false
+BinPackParameters: false
+IndentPPDirectives: None
+BraceWrapping:
+  AfterCaseLabel: true
+  AfterControlStatement: Always
+  AfterEnum: true
+  AfterFunction: true
+  AfterStruct: true
+  AfterUnion: true
+  BeforeElse: true
+  BeforeWhile: true
+  SplitEmptyFunction: true
+  SplitEmptyRecord: true
+  SplitEmptyNamespace: true
+BreakBeforeBraces: Custom
+BreakBeforeTernaryOperators: false
+ColumnLimit: 100
+ContinuationIndentWidth: 4
+Cpp11BracedListStyle: false
+IndentCaseBlocks: false
+IndentCaseLabels: true
+IndentWidth: 4
+IndentWrappedFunctionNames: false
+KeepEmptyLinesAtTheStartOfBlocks: true
+Language: Cpp
+MaxEmptyLinesToKeep: 1
+PenaltyReturnTypeOnItsOwnLine: 160
+PointerAlignment: Left
+ReflowComments: false
+SortIncludes: Never
+SpaceAfterCStyleCast: false
+SpaceAfterLogicalNot: false
+SpaceBeforeParens: ControlStatementsExceptControlMacros
+SpacesBeforeTrailingComments: 2
+UseTab: Never
+
+# Clang 13 feature
+AlignArrayOfStructures: Left
