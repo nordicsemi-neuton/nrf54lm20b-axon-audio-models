@@ -1,0 +1,58 @@
+# The west manifest file for upstream Zephyr.
+#
+# The per-installation west configuration file, .west/config, sets the
+# path to the project containing this file in the [manifest] section's
+# "path" variable.
+#
+# You are free to create your own manifest files and put them in any
+# repository you want, to create your own custom Zephyr installations.
+# For example, you could create a manifest file in your own out of
+# tree application directory, which would pull this zephyr repository
+# in as an ordinary project.
+#
+# You can pass your manifest repositories to west init when creating a
+# new Zephyr installation. See the west documentation for more
+# information.
+
+manifest:
+  version: "0.13"
+
+  # "remotes" is a list of locations where git repositories are cloned
+  # and fetched from.
+  remotes:
+    # nRF Connect SDK GitHub organization.
+    # NCS repositories are hosted here.
+    - name: ncs
+      url-base: https://github.com/nrfconnect
+    - name: zephyrproject
+      url-base: https://github.com/zephyrproject-rtos
+
+  # If not otherwise specified, the projects below should be obtained
+  # from the ncs remote.
+  defaults:
+    remote: ncs
+
+  # "projects" is a list of git repositories
+  projects:
+
+    # The Zephyr RTOS fork in the NCS, along with the subset of its
+    # modules which NCS imports directly.
+    #
+    # https://developer.nordicsemi.com/nRF_Connect_SDK/doc/latest/zephyr/introduction/index.html
+    # https://developer.nordicsemi.com/nRF_Connect_SDK/doc/latest/zephyr/guides/modules.html
+    - name: nrf
+      repo-path: sdk-nrf
+      # revision: main
+      revision: v3.3.0-preview2
+      import: true
+    - name: tflite-micro
+      revision: 8d404de73acf7687831e16d88e86e4f73cfddf8e
+      path: optional/modules/lib/tflite-micro
+      repo-path: tflite-micro
+      remote: zephyrproject
+      groups:
+        - optional
+  self:
+    path: axons-ml-lib
+    # This line configures west extensions.
+    west-commands: scripts/west-commands.yml

@@ -1,0 +1,8 @@
+#
+# Copyright (c) 2024 Nordic Semiconductor ASA
+#
+# SPDX-License-Identifier: LicenseRef-Nordic-5-Clause
+#
+rsource "../drivers/axon/Kconfig"
+orsource "../lib/axon/mfcc/zephyr/Kconfig.nrf_axon"
+orsource "../internal/zephyr/Kconfig.nrf_axon"

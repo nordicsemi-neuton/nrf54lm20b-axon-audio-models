@@ -1,0 +1,17 @@
+#
+# Copyright (c) 2024 Nordic Semiconductor ASA
+#
+# SPDX-License-Identifier: LicenseRef-Nordic-5-Clause
+#
+
+
+config NRF_AXON_MFCC
+	bool "Enable Axon Accelerated MFCC Calculation"
+	depends on NRF_AXON
+	help
+	  Enables the base Axon MFCC calculation. Caller is responsible for managing the input
+	  and output and scheduling of MFCC calculation. 
+
+config NRF_AXON_MFCC_NAME
+	string "Name of the mfcc implementation to use"
+	depends on NRF_AXON_MFCC

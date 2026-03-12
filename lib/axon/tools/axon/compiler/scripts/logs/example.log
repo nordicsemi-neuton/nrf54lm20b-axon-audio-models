@@ -1,0 +1,204 @@
+INFO: os.name = nt, platform.system() = Windows, platform.machine() = AMD64
+INFO: running tinyml_kws_model
+INFO: starting compiler...
+DEBUG: model name is : TINYML_KWS
+DEBUG: tflite model filename is : ../../compiler/scripts/models/tinyml/kws/kws_dscnn_16_49_q.tflite
+DEBUG: test dataset is loaded from : ../../internal/compiler/model_data/kws_g12/x_test16_49.npy
+DEBUG: test labels are loaded from : ../../internal/compiler/model_data/kws_g12/y_test16_49.npy and are in the format just_labels
+DEBUG: Creating converter from 3 to 5
+INFO: labels are in order of : ['Down', 'Go', 'Left', 'No', 'Off', 'On', 'Right', 'Stop', 'Up', 'Yes', 'Silence', 'Unknown']
+INFO: running for variant TINYML_KWS
+DEBUG: axon layer no 0[@0]: CONV_2D:padding:SAME, (stride_w, stride_h):(2, 2), activation function:ReLU, (dilation_h, dilation_w):(1, 1), ip shape:[1, 49, 10, 1] k/w shape:[64, 10, 4, 1] bias shape:[64, 1, 1, 1] op shape:[1, 25, 5, 64]
+DEBUG: axon layer no 1[@1]: DEPTHWISE_CONV_2D:padding:SAME, (stride_w, stride_h):(1, 1), activation function:ReLU, (dilation_h, dilation_w):(1, 1), depth_multiplier :1, ip shape:[1, 25, 5, 64] k/w shape:[1, 3, 3, 64] bias shape:[64, 1, 1, 1] op shape:[1, 25, 5, 64]
+DEBUG: axon layer no 2[@2]: POINTWISE_CONV_2D:padding:SAME, (stride_w, stride_h):(1, 1), activation function:ReLU, (dilation_h, dilation_w):(1, 1), ip shape:[1, 25, 5, 64] k/w shape:[64, 1, 1, 64] bias shape:[64, 1, 1, 1] op shape:[1, 25, 5, 64]
+DEBUG: axon layer no 3[@3]: DEPTHWISE_CONV_2D:padding:SAME, (stride_w, stride_h):(1, 1), activation function:ReLU, (dilation_h, dilation_w):(1, 1), depth_multiplier :1, ip shape:[1, 25, 5, 64] k/w shape:[1, 3, 3, 64] bias shape:[64, 1, 1, 1] op shape:[1, 25, 5, 64]
+DEBUG: axon layer no 4[@4]: POINTWISE_CONV_2D:padding:SAME, (stride_w, stride_h):(1, 1), activation function:ReLU, (dilation_h, dilation_w):(1, 1), ip shape:[1, 25, 5, 64] k/w shape:[64, 1, 1, 64] bias shape:[64, 1, 1, 1] op shape:[1, 25, 5, 64]
+DEBUG: axon layer no 5[@5]: DEPTHWISE_CONV_2D:padding:SAME, (stride_w, stride_h):(1, 1), activation function:ReLU, (dilation_h, dilation_w):(1, 1), depth_multiplier :1, ip shape:[1, 25, 5, 64] k/w shape:[1, 3, 3, 64] bias shape:[64, 1, 1, 1] op shape:[1, 25, 5, 64]
+DEBUG: axon layer no 6[@6]: POINTWISE_CONV_2D:padding:SAME, (stride_w, stride_h):(1, 1), activation function:ReLU, (dilation_h, dilation_w):(1, 1), ip shape:[1, 25, 5, 64] k/w shape:[64, 1, 1, 64] bias shape:[64, 1, 1, 1] op shape:[1, 25, 5, 64]
+DEBUG: axon layer no 7[@7]: DEPTHWISE_CONV_2D:padding:SAME, (stride_w, stride_h):(1, 1), activation function:ReLU, (dilation_h, dilation_w):(1, 1), depth_multiplier :1, ip shape:[1, 25, 5, 64] k/w shape:[1, 3, 3, 64] bias shape:[64, 1, 1, 1] op shape:[1, 25, 5, 64]
+DEBUG: axon layer no 8[@8]: POINTWISE_CONV_2D:padding:SAME, (stride_w, stride_h):(1, 1), activation function:ReLU, (dilation_h, dilation_w):(1, 1), ip shape:[1, 25, 5, 64] k/w shape:[64, 1, 1, 64] bias shape:[64, 1, 1, 1] op shape:[1, 25, 5, 64]
+DEBUG: axon layer no 9[@9]: AVERAGE_POOL_2D:Padding :VALID, (stride_w, stride_h):(5, 24), (filter_w, filter_h):(5, 24),activation function:None, ip shape:[1, 25, 5, 64] k/w shape:[0, 24, 5, 0] bias shape:[0, 0, 0, 0] op shape:[1, 1, 1, 64]
+WARNING: RESHAPE is a PASSTHROUGH Operation!
+DEBUG: axon layer no 10[@11]: FULLY_CONNECTED:weights :DEFAULT, activation function:None, ip shape:[1, 1, 64, 1] k/w shape:[1, 12, 64, 1] bias shape:[12, 1, 1, 1] op shape:[1, 1, 12, 1]
+DEBUG: axon layer no 11[@12]: CPU_SOFTMAX:beta value : 1.0, ip shape:[1, 1, 12, 1] k/w shape:[0, 0, 0, 0] bias shape:[0, 0, 0, 0] op shape:[1, 1, 12, 1]
+DEBUG: CPU_SOFTMAX is a cpu operation!
+DEBUG: maximum scaling error -1.00000% from layer : 
+DEBUG: maximum scaling error due to a normalized scaleshift is -1.00000% at layer  from channel 0
+INFO: true Classification : Stop
+INFO: tflite Model Prediction : Stop
+INFO: number of ops in the model 12
+INFO: CONV_2D at axon layer number 0 [@0] is the axon input to the model
+INFO: CPU_SOFTMAX at axon layer number 11 [@12] is the axon output of the model
+DEBUG: compiler intermediate outputs are saved in : intermediate/
+DEBUG: getting the layer outputs for the first 3 requested test vectors...
+INFO: getting test vectors for mass inference...
+DEBUG: getting the quantized input test vector and labels for mass inferencing using the simulator...
+DEBUG: saved the test vector's text files for mass inferencing to intermediate/
+INFO: .... done!, took 0.01702737808227539 seconds! for 10 vectors
+DEBUG: adjust the layer outputs to be at Q11.12 for test vector ndx 0
+DEBUG: adjust the layer outputs to be at Q11.12 for test vector ndx 1
+DEBUG: adjust the layer outputs to be at Q11.12 for test vector ndx 2
+DEBUG: saving the layer outputs for each of the requested test vectors at outputs/
+DEBUG: the accuracy of the floating model on the complete test data set is 0.9261758691206544
+DEBUG: the accuracy of the tflite model on the complete test data set is 0.9190184049079755
+DEBUG: total tflite quantization loss is : 0.7727975270479129%
+INFO: 
+-------------------------------------------------
+ Model TINYML_KWS results (variant : TINYML_KWS)
+-------------------------------------------------
+
+	Memory Usage (in bytes)
+
+		model_const_buffer_size:	22064
+		interlayer_buffer_size:	13292
+		psum_buffer_size:	0
+		cmd_buffer_size:	28840
+
+	Inference time (estimate, in ticks):	0
+
+	Accuracy (test data set size 10)
+		Tflite float model:	0.9000
+		Tflite int8 model:	0.9000
+		Axons int8 model:	0.9000
+
+	Quantization loss (w.r.t float model)%:
+		Tflite int8 model:	0.00%
+		Axons int8 model:	0.00%
+
+	Precision:	0.67
+		Labels		Precision
+		Down		1.00
+		Go		0.00
+		Left		1.00
+		No		0.00
+		Off		1.00
+		On		1.00
+		Right		1.00
+		Stop		1.00
+		Up		1.00
+		Yes		1.00
+		Silence		0.00
+		Unknown		0.00
+
+	Confusion Matrix (tflite float, tflite int8, axons int8)
+			Down	Go	Left	No	Off	On	Right	Stop	Up	Yes	Silence	Unknown	__actual_total__
+		Down	1,1,1	0,0,0	0,0,0	0,0,0	0,0,0	0,0,0	0,0,0	0,0,0	0,0,0	0,0,0	0,0,0	0,0,0	1,1,1
+		Go	0,0,0	0,0,0	0,0,0	0,0,0	0,0,0	0,0,0	0,0,0	0,0,0	0,0,0	0,0,0	0,0,0	0,0,0	0,0,0
+		Left	0,0,0	0,0,0	1,1,1	0,0,0	0,0,0	0,0,0	0,0,0	0,0,0	0,0,0	0,0,0	0,0,0	0,0,0	1,1,1
+		No	0,0,0	1,1,1	0,0,0	0,0,0	0,0,0	0,0,0	0,0,0	0,0,0	0,0,0	0,0,0	0,0,0	0,0,0	1,1,1
+		Off	0,0,0	0,0,0	0,0,0	0,0,0	1,1,1	0,0,0	0,0,0	0,0,0	0,0,0	0,0,0	0,0,0	0,0,0	1,1,1
+		On	0,0,0	0,0,0	0,0,0	0,0,0	0,0,0	1,1,1	0,0,0	0,0,0	0,0,0	0,0,0	0,0,0	0,0,0	1,1,1
+		Right	0,0,0	0,0,0	0,0,0	0,0,0	0,0,0	0,0,0	1,1,1	0,0,0	0,0,0	0,0,0	0,0,0	0,0,0	1,1,1
+		Stop	0,0,0	0,0,0	0,0,0	0,0,0	0,0,0	0,0,0	0,0,0	1,1,1	0,0,0	0,0,0	0,0,0	0,0,0	1,1,1
+		Up	0,0,0	0,0,0	0,0,0	0,0,0	0,0,0	0,0,0	0,0,0	0,0,0	2,2,2	0,0,0	0,0,0	0,0,0	2,2,2
+		Yes	0,0,0	0,0,0	0,0,0	0,0,0	0,0,0	0,0,0	0,0,0	0,0,0	0,0,0	1,1,1	0,0,0	0,0,0	1,1,1
+		Silence	0,0,0	0,0,0	0,0,0	0,0,0	0,0,0	0,0,0	0,0,0	0,0,0	0,0,0	0,0,0	0,0,0	0,0,0	0,0,0
+		Unknown	0,0,0	0,0,0	0,0,0	0,0,0	0,0,0	0,0,0	0,0,0	0,0,0	0,0,0	0,0,0	0,0,0	0,0,0	0,0,0
+		__predicted_total__	1,1,1	1,1,1	1,1,1	0,0,0	1,1,1	1,1,1	1,1,1	1,1,1	2,2,2	1,1,1	0,0,0	0,0,0	10,10,10
+INFO: done running variant TINYML_KWS, return code 0
+INFO: 
+	Performance_Metrics
+		Model_Variant	Inference_Time	Accuracy	Precision	Quantization_Loss	Flash_Size	Ram_Size	Total_Memory	
+		TINYML_KWS	0	0.9	0.6666666666666666	0.0	50904	13292	64196
+INFO: completed running tinyml_kws_model, return code 0(NRF_AXON_COMPILER_RESULT_SUCCESS), took 10.75 seconds
+INFO: running tinyml_ic_model
+INFO: starting compiler...
+DEBUG: model name is : TINYML_IC
+DEBUG: tflite model filename is : ../../compiler/scripts/models/tinyml/image_classification/pretrainedResnet_quant.tflite
+DEBUG: test dataset is loaded from : ../../internal/compiler/model_data/image_classification/x_test_ic.npy
+DEBUG: test labels are loaded from : ../../internal/compiler/model_data/image_classification/y_test_ic.npy and are in the format last_layer_vector
+INFO: labels are in order of : ['airplane', 'automobile', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck']
+INFO: running for variant TINYML_IC
+DEBUG: axon layer no 0[@0]: CONV_2D:padding:SAME, (stride_w, stride_h):(1, 1), activation function:ReLU, (dilation_h, dilation_w):(1, 1), ip shape:[1, 32, 32, 3] k/w shape:[16, 3, 3, 3] bias shape:[16, 1, 1, 1] op shape:[1, 32, 32, 16]
+DEBUG: axon layer no 1[@1]: CONV_2D:padding:SAME, (stride_w, stride_h):(1, 1), activation function:ReLU, (dilation_h, dilation_w):(1, 1), ip shape:[1, 32, 32, 16] k/w shape:[16, 3, 3, 16] bias shape:[16, 1, 1, 1] op shape:[1, 32, 32, 16]
+DEBUG: axon layer no 2[@2]: CONV_2D:padding:SAME, (stride_w, stride_h):(1, 1), activation function:None, (dilation_h, dilation_w):(1, 1), ip shape:[1, 32, 32, 16] k/w shape:[16, 3, 3, 16] bias shape:[16, 1, 1, 1] op shape:[1, 32, 32, 16]
+DEBUG: axon layer no 3[@3]: ADD:activation function:ReLU, pot scale int16:True, ip shape:[1, 32, 32, 16] k/w shape:[0, 0, 0, 0] bias shape:[0, 0, 0, 0] op shape:[1, 32, 32, 16]
+DEBUG: axon layer no 4[@4]: CONV_2D:padding:SAME, (stride_w, stride_h):(2, 2), activation function:ReLU, (dilation_h, dilation_w):(1, 1), ip shape:[1, 32, 32, 16] k/w shape:[32, 3, 3, 16] bias shape:[32, 1, 1, 1] op shape:[1, 16, 16, 32]
+DEBUG: axon layer no 5[@5]: CONV_2D:padding:SAME, (stride_w, stride_h):(1, 1), activation function:None, (dilation_h, dilation_w):(1, 1), ip shape:[1, 16, 16, 32] k/w shape:[32, 3, 3, 32] bias shape:[32, 1, 1, 1] op shape:[1, 16, 16, 32]
+DEBUG: axon layer no 6[@6]: POINTWISE_CONV_2D:padding:SAME, (stride_w, stride_h):(2, 2), activation function:None, (dilation_h, dilation_w):(1, 1), ip shape:[1, 32, 32, 16] k/w shape:[32, 1, 1, 16] bias shape:[32, 1, 1, 1] op shape:[1, 16, 16, 32]
+DEBUG: axon layer no 7[@7]: ADD:activation function:ReLU, pot scale int16:True, ip shape:[1, 16, 16, 32] k/w shape:[0, 0, 0, 0] bias shape:[0, 0, 0, 0] op shape:[1, 16, 16, 32]
+DEBUG: axon layer no 8[@8]: CONV_2D:padding:SAME, (stride_w, stride_h):(2, 2), activation function:ReLU, (dilation_h, dilation_w):(1, 1), ip shape:[1, 16, 16, 32] k/w shape:[64, 3, 3, 32] bias shape:[64, 1, 1, 1] op shape:[1, 8, 8, 64]
+DEBUG: axon layer no 9[@9]: CONV_2D:padding:SAME, (stride_w, stride_h):(1, 1), activation function:None, (dilation_h, dilation_w):(1, 1), ip shape:[1, 8, 8, 64] k/w shape:[64, 3, 3, 64] bias shape:[64, 1, 1, 1] op shape:[1, 8, 8, 64]
+DEBUG: axon layer no 10[@10]: POINTWISE_CONV_2D:padding:SAME, (stride_w, stride_h):(2, 2), activation function:None, (dilation_h, dilation_w):(1, 1), ip shape:[1, 16, 16, 32] k/w shape:[64, 1, 1, 32] bias shape:[64, 1, 1, 1] op shape:[1, 8, 8, 64]
+DEBUG: axon layer no 11[@11]: ADD:activation function:ReLU, pot scale int16:True, ip shape:[1, 8, 8, 64] k/w shape:[0, 0, 0, 0] bias shape:[0, 0, 0, 0] op shape:[1, 8, 8, 64]
+DEBUG: axon layer no 12[@12]: AVERAGE_POOL_2D_MEAN:Padding :VALID, (stride_w, stride_h):(8, 8), (filter_w, filter_h):(8, 8),activation function:None, ip shape:[1, 8, 8, 64] k/w shape:[0, 8, 8, 0] bias shape:[0, 0, 0, 0] op shape:[1, 1, 1, 64]
+WARNING: RESHAPE is a PASSTHROUGH Operation!
+DEBUG: axon layer no 13[@14]: FULLY_CONNECTED:weights :DEFAULT, activation function:None, ip shape:[1, 1, 64, 1] k/w shape:[1, 10, 64, 1] bias shape:[10, 1, 1, 1] op shape:[1, 1, 10, 1]
+DEBUG: axon layer no 14[@15]: CPU_SOFTMAX:beta value : 1.0, ip shape:[1, 1, 10, 1] k/w shape:[0, 0, 0, 0] bias shape:[0, 0, 0, 0] op shape:[1, 1, 10, 1]
+DEBUG: CPU_SOFTMAX is a cpu operation!
+DEBUG: maximum scaling error -1.00000% from layer : 
+DEBUG: maximum PSUM layer is at TINYML_IC_AXON_LAYER_0_TF_ID_0_CONV_2D
+DEBUG: maximum scaling error due to a normalized scaleshift is -1.00000% at layer  from channel 0
+INFO: true Classification : bird
+INFO: tflite Model Prediction : dog
+INFO: number of ops in the model 15
+INFO: CONV_2D at axon layer number 0 [@0] is the axon input to the model
+INFO: CPU_SOFTMAX at axon layer number 14 [@15] is the axon output of the model
+DEBUG: compiler intermediate outputs are saved in : intermediate/
+DEBUG: getting the layer outputs for the first 3 requested test vectors...
+INFO: getting test vectors for mass inference...
+DEBUG: getting the quantized input test vector and labels for mass inferencing using the simulator...
+DEBUG: saved the test vector's text files for mass inferencing to intermediate/
+INFO: .... done!, took 0.07705211639404297 seconds! for 10 vectors
+DEBUG: adjust the layer outputs to be at Q11.12 for test vector ndx 0
+DEBUG: adjust the layer outputs to be at Q11.12 for test vector ndx 1
+DEBUG: adjust the layer outputs to be at Q11.12 for test vector ndx 2
+DEBUG: saving the layer outputs for each of the requested test vectors at outputs/
+DEBUG: the accuracy of the floating model on the complete test data set is 0.87
+DEBUG: the accuracy of the tflite model on the complete test data set is 0.87
+DEBUG: total tflite quantization loss is : 0.0%
+INFO: 
+-----------------------------------------------
+ Model TINYML_IC results (variant : TINYML_IC)
+-----------------------------------------------
+
+	Memory Usage (in bytes)
+
+		model_const_buffer_size:	77400
+		interlayer_buffer_size:	56320
+		psum_buffer_size:	0
+		cmd_buffer_size:	77360
+
+	Inference time (estimate, in ticks):	0
+
+	Accuracy (test data set size 10)
+		Tflite float model:	0.7000
+		Tflite int8 model:	0.7000
+		Axons int8 model:	0.7000
+
+	Quantization loss (w.r.t float model)%:
+		Tflite int8 model:	0.00%
+		Axons int8 model:	0.00%
+
+	Precision:	0.40
+		Labels		Precision
+		airplane		1.00
+		automobile		1.00
+		bird		0.00
+		cat		0.00
+		deer		1.00
+		dog		1.00
+		frog		0.00
+		horse		0.00
+		ship		0.00
+		truck		0.00
+
+	Confusion Matrix (tflite float, tflite int8, axons int8)
+			airplane	automobile	bird	cat	deer	dog	frog	horse	ship	truck	__actual_total__
+		airplane	1,1,1	0,0,0	0,0,0	0,0,0	0,0,0	0,0,0	0,0,0	0,0,0	0,0,0	0,0,0	1,1,1
+		automobile	0,0,0	2,2,2	0,0,0	0,0,0	0,0,0	0,0,0	0,0,0	0,0,0	0,0,0	0,0,0	2,2,2
+		bird	0,0,0	0,0,0	0,0,0	1,0,0	0,0,0	1,1,0	0,1,1	0,0,1	0,0,0	0,0,0	2,2,2
+		cat	0,0,0	0,0,0	0,0,0	0,0,0	0,0,0	0,0,0	1,1,1	0,0,0	0,0,0	0,0,0	1,1,1
+		deer	0,0,0	0,0,0	0,0,0	0,0,0	2,2,2	0,0,0	0,0,0	0,0,0	0,0,0	0,0,0	2,2,2
+		dog	0,0,0	0,0,0	0,0,0	0,0,0	0,0,0	2,2,2	0,0,0	0,0,0	0,0,0	0,0,0	2,2,2
+		frog	0,0,0	0,0,0	0,0,0	0,0,0	0,0,0	0,0,0	0,0,0	0,0,0	0,0,0	0,0,0	0,0,0
+		horse	0,0,0	0,0,0	0,0,0	0,0,0	0,0,0	0,0,0	0,0,0	0,0,0	0,0,0	0,0,0	0,0,0
+		ship	0,0,0	0,0,0	0,0,0	0,0,0	0,0,0	0,0,0	0,0,0	0,0,0	0,0,0	0,0,0	0,0,0
+		truck	0,0,0	0,0,0	0,0,0	0,0,0	0,0,0	0,0,0	0,0,0	0,0,0	0,0,0	0,0,0	0,0,0
+		__predicted_total__	1,1,1	2,2,2	0,0,0	1,0,0	2,2,2	3,3,2	1,2,2	0,0,1	0,0,0	0,0,0	10,10,10
+INFO: done running variant TINYML_IC, return code 0
+INFO: 
+	Performance_Metrics
+		Model_Variant	Inference_Time	Accuracy	Precision	Quantization_Loss	Flash_Size	Ram_Size	Total_Memory	
+		TINYML_IC	0	0.7	0.4	0.0	154760	56320	211080
+INFO: completed running tinyml_ic_model, return code 0(NRF_AXON_COMPILER_RESULT_SUCCESS), took 18.78 seconds
