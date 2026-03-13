@@ -5,6 +5,7 @@ Audio ML sample applications for nRF54LM20B using Axon and nRF Edge AI.
 This repository is a west manifest project and currently contains these applications:
 
 - [Snoring Detection](app/snoring_detection/README.md)
+- [Wakeword KWS](app/wakeword_kws/README.md)
 
 ## 1) Prerequisites
 
@@ -86,6 +87,7 @@ Use this path if you prefer GUI workflows.
 3. Ensure Toolchain and SDK point to a compatible NCS installation (matching `v3.3.0-preview2` if possible).
 4. Add an application:
 	 - For Snoring: `app/snoring_detection`
+	 - For Wakeword KWS: `app/wakeword_kws`
 5. Select board: `nrf54lm20dk/nrf54lm20b/cpuapp`.
 6. Enable Sysbuild in the build configuration.
 
@@ -111,6 +113,10 @@ Use this path if you prefer GUI workflows.
 ### Snoring Detection ([app/snoring_detection/README.md](app/snoring_detection/README.md))
 
 Continuously captures PDM microphone audio, feeds it into an nRF Edge AI snoring model, applies rolling confidence postprocessing to reduce false positives, and signals detection events by logging and blinking LED0.
+
+### Wakeword KWS ([app/wakeword_kws/README.md](app/wakeword_kws/README.md))
+
+Continuously captures DMIC audio, waits for the "Okay Nordic" wakeword, then runs keyword spotting in a gated 7-second window and logs detected commands.
 
 ## 7) Troubleshooting
 

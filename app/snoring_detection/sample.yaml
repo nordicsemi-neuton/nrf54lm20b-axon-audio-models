@@ -1,6 +1,6 @@
 sample:
   description: Continuous PDM microphone snoring detection using an nRF Edge AI model with rolling confidence postprocessing and LED alert.
-  name: Snoring Detection model
+  name: Snoring Detection Application
 
 common:
   sysbuild: true
