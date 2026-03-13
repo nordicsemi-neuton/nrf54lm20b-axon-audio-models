@@ -4,7 +4,7 @@ Audio ML sample applications for nRF54LM20B using Axon and nRF Edge AI.
 
 This repository is a west manifest project and currently contains these applications:
 
-- `app/snoring_detection`
+- [Snoring Detection](app/snoring_detection/README.md)
 
 ## 1) Prerequisites
 
@@ -73,7 +73,6 @@ Connect the DK over USB, then flash from the matching build directory.
 west flash -d build/snoring_detection
 ```
 
-
 If multiple boards/debug probes are connected, specify a runner option as needed (for example serial number).
 
 ## 5) Build and Flash with nRF Connect for VS Code
@@ -109,7 +108,7 @@ Use this path if you prefer GUI workflows.
 
 ## 6) Sample Descriptions
 
-### Snoring Detection (`app/snoring_detection`)
+### Snoring Detection ([app/snoring_detection/README.md](app/snoring_detection/README.md))
 
 Continuously captures PDM microphone audio, feeds it into an nRF Edge AI snoring model, applies rolling confidence postprocessing to reduce false positives, and signals detection events by logging and blinking LED0.
 
