@@ -80,6 +80,7 @@ int main()
         // Feed audio data to the model dsp pipeline and
         // waiting for internal buffers to be filled with enough data for feature extraction
         res = nrf_edgeai_feed_inputs(p_model, audio_buffer, samples_num);
+        dmic_free_buffer(audio_buffer);
 
         if (res != NRF_EDGEAI_ERR_SUCCESS) { continue; }
 
