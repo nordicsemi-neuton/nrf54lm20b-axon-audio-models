@@ -140,6 +140,9 @@ int main()
     int err = dmic_init();
     __ASSERT(err == 0, "Failed to initialize DMIC, error code: %d\n", err);
 
+    err = dmic_start();
+    __ASSERT(err == 0, "Failed to start DMIC, error code: %d\n", err);
+
     void*  audio_buffer;
     size_t audio_buffer_size;
 
