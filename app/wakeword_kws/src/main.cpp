@@ -127,18 +127,18 @@ int main()
     // Initialize wakeword model
     nrf_edgeai_err_t res = nrf_edgeai_init(p_wakeword_model);
     __ASSERT(res == NRF_EDGEAI_ERR_SUCCESS,
-             "Failed to initialize Wakeword Edge AI model, error code: %d",
+             "Failed to initialize Wakeword Edge AI model, error code: %d\n",
              res);
 
     // Initialize keyword spotting model
     res = nrf_edgeai_init(p_kws_model);
     __ASSERT(res == NRF_EDGEAI_ERR_SUCCESS,
-             "Failed to initialize KWS Edge AI model, error code: %d",
+             "Failed to initialize KWS Edge AI model, error code: %d\n",
              res);
 
     // Initialize PDM microphone
     int err = dmic_init();
-    __ASSERT(err == 0, "Failed to initialize DMIC, error code: %d", err);
+    __ASSERT(err == 0, "Failed to initialize DMIC, error code: %d\n", err);
 
     void*  audio_buffer;
     size_t audio_buffer_size;
@@ -155,7 +155,7 @@ int main()
         err = dmic_read_buffer(&audio_buffer, &audio_buffer_size, read_timeout);
         if (err < 0)
         {
-            printk("Failed to read from DMIC (err %d)", err);
+            printk("Failed to read from DMIC (err %d)\n", err);
             continue;
         }
 

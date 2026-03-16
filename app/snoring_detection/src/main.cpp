@@ -46,20 +46,20 @@ int main()
     // Initialize snoring model
     nrf_edgeai_err_t res = nrf_edgeai_init(p_model);
     __ASSERT(res == NRF_EDGEAI_ERR_SUCCESS,
-             "Failed to initialize Edge AI model, error code: %d",
+             "Failed to initialize Edge AI model, error code: %d\n",
              res);
     // Initialize PDM microphone and LEDs
     int err = dmic_init();
-    __ASSERT(err == 0, "Failed to initialize DMIC, error code: %d", err);
+    __ASSERT(err == 0, "Failed to initialize DMIC, error code: %d\n", err);
 
     err = leds_init();
-    __ASSERT(err == 0, "Failed to initialize LEDs, error code: %d", err);
+    __ASSERT(err == 0, "Failed to initialize LEDs, error code: %d\n", err);
 
     printk("Initialization completed!\n");
     printk("Listening Audio Environment for snoring ...\n");
 
     err = dmic_start();
-    __ASSERT(err == 0, "Failed to start DMIC, error code: %d", err);
+    __ASSERT(err == 0, "Failed to start DMIC, error code: %d\n", err);
 
     void*         audio_buffer;
     size_t        audio_buffer_size;
@@ -71,7 +71,7 @@ int main()
         err = dmic_read_buffer(&audio_buffer, &audio_buffer_size, read_timeout);
         if (err < 0)
         {
-            printk("Failed to read from DMIC (err %d)", err);
+            printk("Failed to read from DMIC (err %d)\n", err);
             continue;
         }
 
@@ -127,7 +127,7 @@ static bool snoring_detection_postprocessing(nrf_edgeai_t* p_model)
     predicitons_history = (predicitons_history << 1) | detected;
 
 #if PRINT_RAW_PROBABILITY
-    printk("Predictions count: %2u, probability: %0.3f", prediction_count, probability);
+    printk("Predictions count: %2u, probability: %0.3f\n", prediction_count, probability);
 #endif
 
     if (prediction_count >= PREDICTION_NUM_IN_ROW)

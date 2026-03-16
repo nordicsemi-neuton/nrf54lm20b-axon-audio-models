@@ -28,7 +28,7 @@ int dmic_init(void)
 
     if (!device_is_ready(dmic_dev))
     {
-        printk("Device is not ready");
+        printk("Device is not ready\n");
         return -ENODEV;
     }
 
@@ -57,7 +57,7 @@ int dmic_init(void)
     err = dmic_configure(dmic_dev, &cfg);
     if (err < 0)
     {
-        printk("Failed to configure (err %d)", err);
+        printk("Failed to configure (err %d)\n", err);
         return err;
     }
 

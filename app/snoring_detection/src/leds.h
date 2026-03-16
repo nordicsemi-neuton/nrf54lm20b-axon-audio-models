@@ -7,7 +7,6 @@
 /**
  * @defgroup leds LEDs control functions
  * @{
- * @ingroup ww_kws
  */
 
 #ifndef __LEDS_H__

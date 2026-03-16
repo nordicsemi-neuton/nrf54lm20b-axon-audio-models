@@ -7,7 +7,6 @@
 /**
  * @defgroup dmic DMIC control functions
  * @{
- * @ingroup ww_kws
  */
 
 #ifndef __DMIC_H__
