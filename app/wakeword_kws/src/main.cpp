@@ -275,7 +275,7 @@ static bool is_wakeword_detected(flt32_t probability)
     }
 
 #if PRINT_RAW_PROBABILITY
-    printk("Wakeword model count: %d\tprob : %0.3f\n", counter, probability);
+    printk("Wakeword model count: %d \tprob : %0.3f\n", counter, probability);
 #endif
 
     return is_detected;
@@ -323,7 +323,8 @@ static bool is_keyword_detected(uint16_t     predicted_class,
         (probability - runtime_ctx.average_probability) / runtime_ctx.count;
 
 #if PRINT_RAW_PROBABILITY
-    printk("Keyword model count: %d\tprob : %0.3f\n",
+    printk("Keyword model class %d, count: %d \tprob : %0.3f\n",
+           runtime_ctx.predicted_class,
            runtime_ctx.count,
            runtime_ctx.average_probability);
 #endif
