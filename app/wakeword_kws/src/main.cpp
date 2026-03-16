@@ -13,6 +13,7 @@
 
 #define MODEL_WAKEWORD_LABEL        "Okay Nordic"
 #define KEYWORD_SPOTTING_TIMEOUT_MS 7000
+#define PRINT_RAW_PROBABILITY       0
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -273,6 +274,10 @@ static bool is_wakeword_detected(flt32_t probability)
         counter = 0;
     }
 
+#if PRINT_RAW_PROBABILITY
+    printk("Wakeword model count: %d, prob : %0.3f\n", counter, probability);
+#endif
+
     return is_detected;
 }
 
@@ -316,6 +321,12 @@ static bool is_keyword_detected(uint16_t     predicted_class,
     runtime_ctx.count++;
     runtime_ctx.average_probability +=
         (probability - runtime_ctx.average_probability) / runtime_ctx.count;
+
+#if PRINT_RAW_PROBABILITY
+    printk("Keyword model count: %d, prob : %0.3f\n",
+           runtime_ctx.count,
+           runtime_ctx.average_probability);
+#endif
 
     if ((runtime_ctx.count >= p_keyword_ctx->num_in_row) &&
         (runtime_ctx.average_probability >= p_keyword_ctx->prob_threshold))
