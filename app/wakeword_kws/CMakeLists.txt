@@ -11,8 +11,8 @@ project(nrf54lm20b_wakeword_gated_kws)
 # Note: The nrf_edgeai library is linked directly in zephyr/CMakeLists.txt using zephyr_link_libraries(),
 # and the axon-ml SDK sources are added directly to Zephyr via zephyr_sources() in the same CMakeLists.txt.
 
-target_sources(app PRIVATE src/main.cpp
+target_sources(app PRIVATE
+    src/main.cpp
     src/models/wakeword/nrf_edgeai_generated/nrf_edgeai_user_model.c
     src/models/kws/nrf_edgeai_generated/nrf_edgeai_user_model.c
-    src/dmic.c
 )

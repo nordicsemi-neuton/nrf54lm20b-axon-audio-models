@@ -3,3 +3,4 @@
 source "Kconfig.zephyr"
 
 rsource "../../lib/axon/zephyr/Kconfig.nrf_axon"
+rsource "../../lib/bsp/Kconfig"

@@ -1,0 +1,16 @@
+# BSP Kconfig options
+
+config BSP_DMIC_BUFFER_BLOCKS
+	int "Number of DMIC memory slab blocks"
+	default 4
+	help
+	  Number of memory slab blocks allocated for DMIC buffering.
+	  Increase for applications that need to tolerate slow processing,
+	  such as applications with synchronous debug prints.
+
+config BSP_LEDS
+	bool "BSP LED support"
+	depends on GPIO
+	default n
+	help
+	  Enable LED control functions from the BSP library.
