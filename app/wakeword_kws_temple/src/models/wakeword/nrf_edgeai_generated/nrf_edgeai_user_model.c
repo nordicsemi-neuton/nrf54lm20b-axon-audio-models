@@ -1,4 +1,8 @@
-
+/* 2026-03-04T12:39:01.320221 */
+/*
+* Copyright (c) 2026 Nordic Semiconductor ASA
+* SPDX-License-Identifier: LicenseRef-Nordic-5-Clause
+*/
 #include "nrf_edgeai_user_model.h"
 #include "nrf_edgeai_user_types.h"
 #include <nrf_edgeai/nrf_edgeai_platform.h>
@@ -6,8 +10,8 @@
 
 //////////////////////////////////////////////////////////////////////////////
 /* Nordic EdgeAI Lab Solution ID and Runtime Version */
-#define EDGEAI_LAB_SOLUTION_ID_STR      "11323"
-#define EDGEAI_RUNTIME_VERSION_COMBINED 0x00000002
+#define EDGEAI_LAB_SOLUTION_ID_STR      "36197"
+#define EDGEAI_RUNTIME_VERSION_COMBINED 0x00000202
 
 //////////////////////////////////////////////////////////////////////////////
 #define INPUT_TYPE i16
@@ -59,7 +63,7 @@ static const nrf_user_input_t INPUT_FEATURES_SCALE_MAX[] = { 32767 };
 //////////////////////////////////////////////////////////////////////////////
 #define MODEL_TYPE        __NRF_EDGEAI_MODEL_AXON
 #define MODEL_TASK        0
-#define MODEL_OUTPUTS_NUM 12
+#define MODEL_OUTPUTS_NUM 1
 
 #define MODEL_USES_AS_INPUT_INPUT_FEATURES 0
 #define MODEL_USES_AS_INPUT_DSP_FEATURES   1
@@ -70,7 +74,7 @@ static const nrf_user_input_t INPUT_FEATURES_SCALE_MAX[] = { 32767 };
 #include <drivers/axon/nrf_axon_nn_infer.h>
 #include <axon/nrf_axon_platform.h>
 #include "nrf_edgeai_user_model_axon.h"
-#define P_MODEL_INSTANCE &model_stream_state_internal_int8_5
+#define P_MODEL_INSTANCE &model_axon_user_instance_36197
 #else  // MODEL_TYPE == __NRF_EDGEAI_MODEL_NEUTON
 #define P_MODEL_INSTANCE &model_neuton_user_instance_
 #endif
@@ -219,8 +223,8 @@ static nrf_edgeai_t nrf_edgeai_ = {
     ///
     .p_dsp = P_DSP_PIPELINE,
     ///
-    .model.type                 = MODEL_TYPE,
-    .model.task                 = MODEL_TASK,
+    .model.type                 = (nrf_edgeai_model_type_t)MODEL_TYPE,
+    .model.task                 = (nrf_edgeai_model_task_t)MODEL_TASK,
     .model.instance.p_void      = P_MODEL_INSTANCE,
     .model.output.memory.p_void = model_outputs_,
     .model.output.num           = MODEL_OUTPUTS_NUM,
@@ -239,14 +243,14 @@ static nrf_edgeai_t nrf_edgeai_ = {
 
 //////////////////////////////////////////////////////////////////////////////
 
-nrf_edgeai_t* nrf_edgeai_user_model_kws(void)
+nrf_edgeai_t* nrf_edgeai_user_model_wakeword(void)
 {
     return &nrf_edgeai_;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-uint32_t nrf_edgeai_user_model_neuton_size_kws(void)
+uint32_t nrf_edgeai_user_model_neuton_size_wakeword(void)
 {
     uint32_t model_meta_size = 0;
 #if MODEL_TYPE == __NRF_EDGEAI_MODEL_NEUTON
