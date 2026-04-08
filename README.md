@@ -6,6 +6,7 @@ This repository is a west manifest project and currently contains these applicat
 
 - [Snoring Detection](app/snoring_detection/README.md)
 - [Wakeword KWS](app/wakeword_kws/README.md)
+- [Wakeword Double KWS](app/wakeword_double_kws/README.md)
 
 ## 1) Prerequisites
 
@@ -142,6 +143,10 @@ Continuously captures PDM microphone audio, feeds it into an nRF Edge AI snoring
 ### Wakeword KWS ([app/wakeword_kws/README.md](app/wakeword_kws/README.md))
 
 Continuously captures DMIC audio, waits for the "Okay Nordic" wakeword, then runs keyword spotting in a gated 7-second window and logs detected commands.
+
+### Wakeword Double KWS ([app/wakeword_double_kws/README.md](app/wakeword_double_kws/README.md))
+
+Continuously captures DMIC audio, waits for the "Okay Nordic" wakeword, then runs a two-model pipeline in a gated 7-second window: a wakeword model followed by a keyword spotting model that recognises two-word command phrases (START/END + FOOD/MUSIC/TRAINING). The active window resets on each successfully detected command and the application returns to wakeword mode on timeout.
 
 ## 7) Troubleshooting
 
