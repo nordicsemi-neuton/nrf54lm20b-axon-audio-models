@@ -1,6 +1,6 @@
 sample:
   description: Continuous DMIC audio pipeline that waits for the "Okay Nordic" wakeword, then runs nRF Edge AI keyword spotting in a 7-second active window and returns to recognized multiple keywords in sequence (phrase).
-  name: Wakeword gated Double KeyWord Spotting / Phase (KWS) application
+  name: Wakeword gated Double KeyWord Spotting / Phrase application
 
 common:
   sysbuild: true
