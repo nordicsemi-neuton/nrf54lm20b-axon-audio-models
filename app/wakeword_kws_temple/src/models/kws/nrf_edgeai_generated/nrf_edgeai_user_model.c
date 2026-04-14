@@ -70,7 +70,7 @@ static const nrf_user_input_t INPUT_FEATURES_SCALE_MAX[] = { 32767 };
 #include <drivers/axon/nrf_axon_nn_infer.h>
 #include <axon/nrf_axon_platform.h>
 #include "nrf_edgeai_user_model_axon.h"
-#define P_MODEL_INSTANCE &model_stream_state_internal_int8_7
+#define P_MODEL_INSTANCE &model_stream_state_internal_int8_8
 #else  // MODEL_TYPE == __NRF_EDGEAI_MODEL_NEUTON
 #define P_MODEL_INSTANCE &model_neuton_user_instance_
 #endif

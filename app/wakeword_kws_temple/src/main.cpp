@@ -15,8 +15,9 @@
 
 #define MODEL_WAKEWORD_LABEL        "Okay Nordic"
 #define KEYWORD_SPOTTING_TIMEOUT_MS 7000
-#define DEMO_FINAL_DETECTIONS_ONLY  1
+#define DEMO_FINAL_DETECTIONS_ONLY  0
 #define PRINT_RAW_PROBABILITY       0
+#define PRINT_KEYWORD_CLASS_ACTIVITY 1
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -375,9 +376,9 @@ static bool is_wakeword_detected(flt32_t probability)
     {
         if (!result_row[i])
         {
-        #if PRINT_RAW_PROBABILITY
+#if PRINT_RAW_PROBABILITY
             printk("Wakeword window fill: %u \tprob : %0.3f\n", (unsigned int)filled, probability);
-        #endif
+#endif
             return false;
         }
     }
@@ -482,7 +483,7 @@ static bool try_detect_keyword_command(uint16_t     predicted_class,
         s_keyword_phrase_ctx.detected_at_ms = now_ms;
     }
 
-#if PRINT_RAW_PROBABILITY
+#if !DEMO_FINAL_DETECTIONS_ONLY && PRINT_KEYWORD_CLASS_ACTIVITY
     printk("Keyword model class %s, count: %u \tprob : %0.3f\n",
            get_keyword_class_cfg(s_keyword_runtime_ctx.predicted_class)->name,
            (unsigned int)s_keyword_runtime_ctx.count,
