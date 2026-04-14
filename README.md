@@ -6,6 +6,7 @@ This repository is a west manifest project and currently contains these applicat
 
 - [Snoring Detection](app/snoring_detection/README.md)
 - [Wakeword KWS](app/wakeword_kws/README.md)
+- [Wakeword Double KWS](app/wakeword_double_kws/README.md)
 
 ## 1) Prerequisites
 
@@ -30,6 +31,31 @@ Recommended SDK/toolchain baseline in this repo:
 
 - Axon driver version: `1.1.0`
 - Driver/module location: `lib/axon`
+
+## Hardware Configuration
+
+### Target Board
+- nRF54LM20DK
+
+### Microphone
+- PDM microphone breakout board: https://www.adafruit.com/product/3492
+
+Use the project DTS overlay as the source of truth for active pin mapping in this app:
+- `boards/nrf54lm20dk_nrf54lm20b_cpuapp.overlay`
+
+Current overlay PDM signals:
+- PDM clock: `P1.04`
+- PDM data in: `P1.05`
+
+### PDM microphone breakout board wiring
+1. Wire microphone 3V to VDDIO and GND to GND on the PDK.
+2. Wire SEL microphone pin to GND on the PDK so PDM data is sampled on the clock rising edge.
+3. Wire microphone CLK to P1-04 and DAT to P1-05 on the PDK.
+
+Note: The microphone is 1.8 V to 3.3 V tolerant.
+
+## Notes
+If hardware wiring does not match the current DTS overlay pin selection, update either wiring or overlay so both use the same CLK/DAT pins.
 
 ## 2) Initialize west Workspace (CLI)
 
@@ -117,6 +143,10 @@ Continuously captures PDM microphone audio, feeds it into an nRF Edge AI snoring
 ### Wakeword KWS ([app/wakeword_kws/README.md](app/wakeword_kws/README.md))
 
 Continuously captures DMIC audio, waits for the "Okay Nordic" wakeword, then runs keyword spotting in a gated 7-second window and logs detected commands.
+
+### Wakeword Double KWS ([app/wakeword_double_kws/README.md](app/wakeword_double_kws/README.md))
+
+Continuously captures DMIC audio, waits for the "Okay Nordic" wakeword, then runs a two-model pipeline in a gated 7-second window: a wakeword model followed by a keyword spotting model that recognises two-word command phrases (START/END + FOOD/MUSIC/TRAINING). The active window resets on each successfully detected command and the application returns to wakeword mode on timeout.
 
 ## 7) Troubleshooting
 

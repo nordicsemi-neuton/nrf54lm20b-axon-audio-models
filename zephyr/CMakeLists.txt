@@ -20,3 +20,7 @@ add_subdirectory(
 	${CMAKE_CURRENT_LIST_DIR}/../lib/axon/drivers
 	${CMAKE_CURRENT_BINARY_DIR}/lib_axon_drivers
 )
+add_subdirectory(
+	${CMAKE_CURRENT_LIST_DIR}/../lib/bsp
+	${CMAKE_CURRENT_BINARY_DIR}/lib_bsp
+)

@@ -6,7 +6,7 @@ cmake_minimum_required(VERSION 3.20.0)
 set(KCONFIG_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/Kconfig)
 
 find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
-project(nrf54lm20b_wakeword_gated_kws)
+project(nrf54lm20b_wakeword_double_kws)
 
 # Note: The nrf_edgeai library is linked directly in zephyr/CMakeLists.txt using zephyr_link_libraries(),
 # and the axon-ml SDK sources are added directly to Zephyr via zephyr_sources() in the same CMakeLists.txt.

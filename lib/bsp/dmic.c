@@ -17,7 +17,7 @@
 
 #define BLOCK_SIZE (DMIC_SAMPLE_BYTES * DMIC_PCM_RATE * SAMPLES_BLOCK_LENGTH_MS / 1000)
 
-K_MEM_SLAB_DEFINE_STATIC(dmic_mem_slab, BLOCK_SIZE, 4, 4);
+K_MEM_SLAB_DEFINE_STATIC(dmic_mem_slab, BLOCK_SIZE, CONFIG_BSP_DMIC_BUFFER_BLOCKS, 4);
 static const struct device* const dmic_dev = DEVICE_DT_GET(DT_NODELABEL(dmic_dev));
 
 //////////////////////////////////////////////////////////////////////////////
@@ -79,6 +79,7 @@ int dmic_read_buffer(void** audio_buffer, size_t* audio_buffer_size, int32_t tim
 }
 
 //////////////////////////////////////////////////////////////////////////////
+
 void dmic_free_buffer(void* buffer)
 {
     k_mem_slab_free(&dmic_mem_slab, buffer);

@@ -11,9 +11,7 @@ project(snoring_detection)
 # Note: The nrf_edgeai library is linked directly in zephyr/CMakeLists.txt using zephyr_link_libraries(),
 # and the axon SDK sources and libraries are added directly to Zephyr via zephyr_sources() in the same CMakeLists.txt.
 
-target_sources(app PRIVATE 
+target_sources(app PRIVATE
     src/main.cpp
     src/nrf_edgeai_generated/nrf_edgeai_user_model.c
-    src/dmic.c
-    src/leds.c
 )
