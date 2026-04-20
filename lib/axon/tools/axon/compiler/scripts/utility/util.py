@@ -109,9 +109,9 @@ def scale_error(data_, scaling_shift):
     Scaling_Shift : Number of the left shifts for quantizing float input.
     """
     data_ += 1e-8  # to avoid divide by zero errors
+    scaling_shift = np.int32(scaling_shift)
     if bool(np.array(data_).any()):
-        error = ((np.round(data_*(2**scaling_shift)) /
-                 (2**scaling_shift))-data_)/(data_)
+        error = (((np.round(data_*(2**scaling_shift)) / (2**scaling_shift))-data_)/(data_) )
     else:
         error = 0
     return abs(error*100)
@@ -1412,6 +1412,7 @@ def get_output_radix(op_radix, scale_shift, op_scale, op_zp, op_bw=np.int8):
     # DEBUG #\n print(f"layer max and min values {layer_max_value,layer_min_value}")
     shift_max_range = scale_shift - \
         (len(bin(int(max(abs(layer_max_value), abs(layer_min_value))))) - 2)
+    shift_max_range = np.int32(shift_max_range)
     if (op_radix <= 0):  # the user has not set the output radix, we need to figure out one
         op_radix = 8  # lets default that at 8 and then use the scale_shift values to maximize that accordingly
     for radix in range(op_radix, shift_max_range):
@@ -1753,6 +1754,13 @@ def get_unit_test_model_name(test_op_info_dict):
                 test_op_info_dict['BROADCAST_AXIS'])
             model_name = model_name + \
                 f"_broadcast_axis_{broadcast_axis_string}"
+    
+    if OP_TYPE == "Dense":
+        if 'OUT_DIM' in test_op_info_dict:
+            out_dim_string = get_string_from_array_values(
+                test_op_info_dict['OUT_DIM'])
+            model_name = model_name + \
+                f"_out_dim_{out_dim_string}"
     return model_name.lower()
 
 

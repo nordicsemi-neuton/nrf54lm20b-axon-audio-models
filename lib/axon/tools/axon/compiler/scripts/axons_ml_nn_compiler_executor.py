@@ -46,7 +46,7 @@ logger = logging.getLogger(__name__)
 
 COMPILER_VERBOSE = 1
 GET_PER_CLASS_PRECISION = True
-GET_INTERMEDIATE_FILES = False
+GET_INTERMEDIATE_FILES = True
 
 USER_WORK_DIR = os.getcwd()
 TOOL_ROOT_DIR = os.path.dirname(__file__)
@@ -1097,6 +1097,7 @@ def debug_app(path):  # to be deprecated
 
 def run_app():
     global USER_WORK_DIR
+    exit_code = 0
     # setup logging here
     log_level = logging.INFO
     log_file_name = "run_"
@@ -1113,7 +1114,7 @@ def run_app():
     logger.addHandler(console_handler)
     log_file_name = log_file_name + str(Path(__file__).name.split('.')[0])+"_"+str(
         dt.datetime.now().strftime("%Y%m%d_%H%M%S"))+".log"
-
+    
     if (len(sys.argv) > 2):
         parser = util.parse_compiler_arguments()
         arguments_dict = vars(parser.parse_args())
@@ -1125,8 +1126,8 @@ def run_app():
                             level=log_level, format=log_format)
         # Log OS details
         logger.debug(
-            f"os.name = {os.name}, platform.system() = {platform.system()}, platform.machine() = {platform.machine()}")
-        axons_compiler(arguments_dict)
+            f"os.name = {os.name}, platform.system() = {platform.system()}, platform.machine() = {platform.machine()}, python version = {platform.python_version()}, tf version = {tf.__version__}")
+        exit_code, app_return_text = axons_compiler(arguments_dict)
         # print(f"...took {(time.time()-start_time):.2f} seconds to complete")
     else:
         """load yaml file and run for however many test inputs are present inside it"""
@@ -1151,7 +1152,7 @@ def run_app():
                                     level=log_level, format=log_format)
                 # Log OS details
                 logger.debug(
-                    f"os.name = {os.name}, platform.system() = {platform.system()}, platform.machine() = {platform.machine()}")
+                    f"os.name = {os.name}, platform.system() = {platform.system()}, platform.machine() = {platform.machine()}, python version = {platform.python_version()}, tf version = {tf.__version__}")
                 for test in yaml_test_list:
                     if (test == "default_values"):
                         continue
@@ -1162,6 +1163,7 @@ def run_app():
                     if app_return != 0:
                         logger.error(
                             f"return code {app_return}, {app_return_text}")
+                        exit_code = -1 
                     else:
                         logger.info(
                             f"completed running {test}, return code {app_return}({app_return_text}), took {(time.time() - start_time):.2f} seconds")
@@ -1169,8 +1171,13 @@ def run_app():
             else:
                 raise Exception(f"yaml file doesn't exist at {path}!")
         else:
-            raise Exception("provide a yaml file!")
+            raise Exception("provide a yaml file!")        
+        return exit_code
 
 
 if __name__ == "__main__":
-    run_app()
+    try:
+        exit_code = run_app()
+        sys.exit(exit_code)
+    except Exception:        
+        sys.exit(-1)

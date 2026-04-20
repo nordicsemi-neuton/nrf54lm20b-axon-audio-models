@@ -1,7 +1,7 @@
 /*********************************************************************************
  * Auto-generated nrf Axon compiled neural network model header file.
  * Model Name: tinyml_kws
- * Axon Neural Network Compiler Version: 1.0.1
+ * Axon Neural Network Compiler Version: 1.1.0
  *********************************************************************************/
 #ifdef __cplusplus
 extern "C" {
@@ -85,7 +85,7 @@ const NRF_AXON_PLATFORM_BITWIDTH_UNSIGNED_TYPE cmd_buffer_tinyml_kws_0_0[228] = 
 };
 const nrf_axon_nn_compiled_model_layer_s model_tinyml_kws_0_0 = {
   .base = {
-    .compiler_version = 0x00010001,
+    .compiler_version = 0x00010100,
     .model_name = "tinyml_kws",
     .labels = labels_tinyml_kws,
     .inputs = {
@@ -143,7 +143,7 @@ const nrf_axon_nn_compiled_model_layer_s model_tinyml_kws_0_0 = {
 /*********************************************************************************
  * Auto-generated nrf Axon compiled neural network model header file.
  * Model Name: tinyml_kws
- * Axon Neural Network Compiler Version: 1.0.1
+ * Axon Neural Network Compiler Version: 1.1.0
  *********************************************************************************/
 #ifdef __cplusplus
 extern "C" {
@@ -227,7 +227,7 @@ const NRF_AXON_PLATFORM_BITWIDTH_UNSIGNED_TYPE cmd_buffer_tinyml_kws_1_1[228] = 
 };
 const nrf_axon_nn_compiled_model_layer_s model_tinyml_kws_1_1 = {
   .base = {
-    .compiler_version = 0x00010001,
+    .compiler_version = 0x00010100,
     .model_name = "tinyml_kws",
     .labels = labels_tinyml_kws,
     .inputs = {
@@ -282,7 +282,7 @@ const nrf_axon_nn_compiled_model_layer_s model_tinyml_kws_1_1 = {
 /*********************************************************************************
  * Auto-generated nrf Axon compiled neural network model header file.
  * Model Name: tinyml_kws
- * Axon Neural Network Compiler Version: 1.0.1
+ * Axon Neural Network Compiler Version: 1.1.0
  *********************************************************************************/
 #ifdef __cplusplus
 extern "C" {
@@ -500,7 +500,7 @@ const NRF_AXON_PLATFORM_BITWIDTH_UNSIGNED_TYPE cmd_buffer_tinyml_kws_2_2[625] = 
 };
 const nrf_axon_nn_compiled_model_layer_s model_tinyml_kws_2_2 = {
   .base = {
-    .compiler_version = 0x00010001,
+    .compiler_version = 0x00010100,
     .model_name = "tinyml_kws",
     .labels = labels_tinyml_kws,
     .inputs = {
@@ -555,7 +555,7 @@ const nrf_axon_nn_compiled_model_layer_s model_tinyml_kws_2_2 = {
 /*********************************************************************************
  * Auto-generated nrf Axon compiled neural network model header file.
  * Model Name: tinyml_kws
- * Axon Neural Network Compiler Version: 1.0.1
+ * Axon Neural Network Compiler Version: 1.1.0
  *********************************************************************************/
 #ifdef __cplusplus
 extern "C" {
@@ -639,7 +639,7 @@ const NRF_AXON_PLATFORM_BITWIDTH_UNSIGNED_TYPE cmd_buffer_tinyml_kws_3_3[228] = 
 };
 const nrf_axon_nn_compiled_model_layer_s model_tinyml_kws_3_3 = {
   .base = {
-    .compiler_version = 0x00010001,
+    .compiler_version = 0x00010100,
     .model_name = "tinyml_kws",
     .labels = labels_tinyml_kws,
     .inputs = {
@@ -694,7 +694,7 @@ const nrf_axon_nn_compiled_model_layer_s model_tinyml_kws_3_3 = {
 /*********************************************************************************
  * Auto-generated nrf Axon compiled neural network model header file.
  * Model Name: tinyml_kws
- * Axon Neural Network Compiler Version: 1.0.1
+ * Axon Neural Network Compiler Version: 1.1.0
  *********************************************************************************/
 #ifdef __cplusplus
 extern "C" {
@@ -912,7 +912,7 @@ const NRF_AXON_PLATFORM_BITWIDTH_UNSIGNED_TYPE cmd_buffer_tinyml_kws_4_4[625] = 
 };
 const nrf_axon_nn_compiled_model_layer_s model_tinyml_kws_4_4 = {
   .base = {
-    .compiler_version = 0x00010001,
+    .compiler_version = 0x00010100,
     .model_name = "tinyml_kws",
     .labels = labels_tinyml_kws,
     .inputs = {
@@ -967,7 +967,7 @@ const nrf_axon_nn_compiled_model_layer_s model_tinyml_kws_4_4 = {
 /*********************************************************************************
  * Auto-generated nrf Axon compiled neural network model header file.
  * Model Name: tinyml_kws
- * Axon Neural Network Compiler Version: 1.0.1
+ * Axon Neural Network Compiler Version: 1.1.0
  *********************************************************************************/
 #ifdef __cplusplus
 extern "C" {
@@ -1051,7 +1051,7 @@ const NRF_AXON_PLATFORM_BITWIDTH_UNSIGNED_TYPE cmd_buffer_tinyml_kws_5_5[228] = 
 };
 const nrf_axon_nn_compiled_model_layer_s model_tinyml_kws_5_5 = {
   .base = {
-    .compiler_version = 0x00010001,
+    .compiler_version = 0x00010100,
     .model_name = "tinyml_kws",
     .labels = labels_tinyml_kws,
     .inputs = {
@@ -1106,7 +1106,7 @@ const nrf_axon_nn_compiled_model_layer_s model_tinyml_kws_5_5 = {
 /*********************************************************************************
  * Auto-generated nrf Axon compiled neural network model header file.
  * Model Name: tinyml_kws
- * Axon Neural Network Compiler Version: 1.0.1
+ * Axon Neural Network Compiler Version: 1.1.0
  *********************************************************************************/
 #ifdef __cplusplus
 extern "C" {
@@ -1324,7 +1324,7 @@ const NRF_AXON_PLATFORM_BITWIDTH_UNSIGNED_TYPE cmd_buffer_tinyml_kws_6_6[625] = 
 };
 const nrf_axon_nn_compiled_model_layer_s model_tinyml_kws_6_6 = {
   .base = {
-    .compiler_version = 0x00010001,
+    .compiler_version = 0x00010100,
     .model_name = "tinyml_kws",
     .labels = labels_tinyml_kws,
     .inputs = {
@@ -1379,7 +1379,7 @@ const nrf_axon_nn_compiled_model_layer_s model_tinyml_kws_6_6 = {
 /*********************************************************************************
  * Auto-generated nrf Axon compiled neural network model header file.
  * Model Name: tinyml_kws
- * Axon Neural Network Compiler Version: 1.0.1
+ * Axon Neural Network Compiler Version: 1.1.0
  *********************************************************************************/
 #ifdef __cplusplus
 extern "C" {
@@ -1463,7 +1463,7 @@ const NRF_AXON_PLATFORM_BITWIDTH_UNSIGNED_TYPE cmd_buffer_tinyml_kws_7_7[228] = 
 };
 const nrf_axon_nn_compiled_model_layer_s model_tinyml_kws_7_7 = {
   .base = {
-    .compiler_version = 0x00010001,
+    .compiler_version = 0x00010100,
     .model_name = "tinyml_kws",
     .labels = labels_tinyml_kws,
     .inputs = {
@@ -1518,7 +1518,7 @@ const nrf_axon_nn_compiled_model_layer_s model_tinyml_kws_7_7 = {
 /*********************************************************************************
  * Auto-generated nrf Axon compiled neural network model header file.
  * Model Name: tinyml_kws
- * Axon Neural Network Compiler Version: 1.0.1
+ * Axon Neural Network Compiler Version: 1.1.0
  *********************************************************************************/
 #ifdef __cplusplus
 extern "C" {
@@ -1736,7 +1736,7 @@ const NRF_AXON_PLATFORM_BITWIDTH_UNSIGNED_TYPE cmd_buffer_tinyml_kws_8_8[625] = 
 };
 const nrf_axon_nn_compiled_model_layer_s model_tinyml_kws_8_8 = {
   .base = {
-    .compiler_version = 0x00010001,
+    .compiler_version = 0x00010100,
     .model_name = "tinyml_kws",
     .labels = labels_tinyml_kws,
     .inputs = {
@@ -1791,7 +1791,7 @@ const nrf_axon_nn_compiled_model_layer_s model_tinyml_kws_8_8 = {
 /*********************************************************************************
  * Auto-generated nrf Axon compiled neural network model header file.
  * Model Name: tinyml_kws
- * Axon Neural Network Compiler Version: 1.0.1
+ * Axon Neural Network Compiler Version: 1.1.0
  *********************************************************************************/
 #ifdef __cplusplus
 extern "C" {
@@ -1813,7 +1813,7 @@ const NRF_AXON_PLATFORM_BITWIDTH_UNSIGNED_TYPE cmd_buffer_tinyml_kws_9_9[36] = {
 };
 const nrf_axon_nn_compiled_model_layer_s model_tinyml_kws_9_9 = {
   .base = {
-    .compiler_version = 0x00010001,
+    .compiler_version = 0x00010100,
     .model_name = "tinyml_kws",
     .labels = labels_tinyml_kws,
     .inputs = {
@@ -1868,7 +1868,7 @@ const nrf_axon_nn_compiled_model_layer_s model_tinyml_kws_9_9 = {
 /*********************************************************************************
  * Auto-generated nrf Axon compiled neural network model header file.
  * Model Name: tinyml_kws
- * Axon Neural Network Compiler Version: 1.0.1
+ * Axon Neural Network Compiler Version: 1.1.0
  *********************************************************************************/
 #ifdef __cplusplus
 extern "C" {
@@ -1894,7 +1894,7 @@ const NRF_AXON_PLATFORM_BITWIDTH_UNSIGNED_TYPE cmd_buffer_tinyml_kws_10_10[61] =
 };
 const nrf_axon_nn_compiled_model_layer_s model_tinyml_kws_10_10 = {
   .base = {
-    .compiler_version = 0x00010001,
+    .compiler_version = 0x00010100,
     .model_name = "tinyml_kws",
     .labels = labels_tinyml_kws,
     .inputs = {
@@ -1949,7 +1949,7 @@ const nrf_axon_nn_compiled_model_layer_s model_tinyml_kws_10_10 = {
 /*********************************************************************************
  * Auto-generated nrf Axon compiled neural network model header file.
  * Model Name: tinyml_kws
- * Axon Neural Network Compiler Version: 1.0.1
+ * Axon Neural Network Compiler Version: 1.1.0
  *********************************************************************************/
 #ifdef __cplusplus
 extern "C" {
@@ -1964,7 +1964,7 @@ const NRF_AXON_PLATFORM_BITWIDTH_UNSIGNED_TYPE cmd_buffer_tinyml_kws_11_11[10] =
 };
 const nrf_axon_nn_compiled_model_layer_s model_tinyml_kws_11_11 = {
   .base = {
-    .compiler_version = 0x00010001,
+    .compiler_version = 0x00010100,
     .model_name = "tinyml_kws",
     .labels = labels_tinyml_kws,
     .inputs = {

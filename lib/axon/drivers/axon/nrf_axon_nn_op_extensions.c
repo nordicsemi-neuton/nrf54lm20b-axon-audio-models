@@ -126,11 +126,13 @@ nrf_axon_result_e nrf_axon_nn_op_extension_softmax(uint16_t argc, NRF_AXON_PLATF
 /**
  * @brief
  * Implements neural net operator sigmoid as a software operation that can be
- * embedded in an axon command buffer.
+ * embedded in an axon command buffer. This is the base operation that can operate in legacy mode (pre 1.1.0) where
+ * output is packed, and v2 mode where output is not masked.
  * @param argc number of arguments in argv. Must be 2
  * @param args down cast to a *nrf_axon_nn_op_extension_base1_args_s
+ * @param packed_output if true, output will be written in packed format. if false, each row will start on a 32bit boundary.
  */
-nrf_axon_result_e nrf_axon_nn_op_extension_sigmoid(uint16_t argc, NRF_AXON_PLATFORM_BITWIDTH_UNSIGNED_TYPE* args)
+static nrf_axon_result_e nrf_axon_nn_op_extension_sigmoid_base(uint16_t argc, NRF_AXON_PLATFORM_BITWIDTH_UNSIGNED_TYPE* args, bool packed_output)
 {
  if (((argc * sizeof(NRF_AXON_PLATFORM_BITWIDTH_UNSIGNED_TYPE)) < sizeof(nrf_axon_nn_op_extension_base1_args_s)) || (args==NULL)) {
     return NRF_AXON_RESULT_FAILURE;
@@ -142,7 +144,7 @@ nrf_axon_result_e nrf_axon_nn_op_extension_sigmoid(uint16_t argc, NRF_AXON_PLATF
    */
   // unpacked input rows always start on a 32bit boundary.
   uint8_t input_extra_stride = (!base1_args->remaining_args.input_is_packed && base1_args->remaining_args.width & 1) ? 1 : 0; 
-  uint8_t output_extra_stride = base1_args->remaining_args.output_bytewidth == 4 ? 0 : (4 - (base1_args->remaining_args.width & 3)) & 3;
+  uint8_t output_extra_stride = packed_output || base1_args->remaining_args.output_bytewidth == 4 ? 0 : (4 - (base1_args->remaining_args.width & 3)) & 3;
 
   int16_t *input_ptr = (int16_t*)base1_args->ptr_args.input;
   union {
@@ -183,7 +185,31 @@ nrf_axon_result_e nrf_axon_nn_op_extension_sigmoid(uint16_t argc, NRF_AXON_PLATF
   return NRF_AXON_RESULT_SUCCESS;
 }
 
-nrf_axon_result_e nrf_axon_nn_op_extension_tanh(uint16_t argc, NRF_AXON_PLATFORM_BITWIDTH_UNSIGNED_TYPE* args)
+/**
+ * sigmoid version used by compiler versions before 1.1.0.
+ */
+nrf_axon_result_e nrf_axon_nn_op_extension_sigmoid(uint16_t argc, NRF_AXON_PLATFORM_BITWIDTH_UNSIGNED_TYPE* args)
+{
+  return nrf_axon_nn_op_extension_sigmoid_base(argc, args, false);
+}
+/**
+ * sigmoid version used by compiler versions 1.1.0 and later
+ */
+nrf_axon_result_e nrf_axon_nn_op_extension_sigmoid_v2(uint16_t argc, NRF_AXON_PLATFORM_BITWIDTH_UNSIGNED_TYPE* args)
+{
+  return nrf_axon_nn_op_extension_sigmoid_base(argc, args, true);
+}
+
+/**
+ * @brief
+ * Implements neural net operator tanh as a software operation that can be
+ * embedded in an axon command buffer. This is the base operation that can operate in legacy mode (pre 1.1.0) where
+ * output is packed, and v2 mode where output is not masked.
+ * @param argc number of arguments in argv. Must be 2
+ * @param args down cast to a *nrf_axon_nn_op_extension_base1_args_s
+ * @param packed_output if true, output will be written in packed format. if false, each row will start on a 32bit boundary.
+ */
+static nrf_axon_result_e nrf_axon_nn_op_extension_tanh_base(uint16_t argc, NRF_AXON_PLATFORM_BITWIDTH_UNSIGNED_TYPE* args, bool packed_output)
 {
  if (((argc * sizeof(NRF_AXON_PLATFORM_BITWIDTH_UNSIGNED_TYPE)) < sizeof(nrf_axon_nn_op_extension_base1_args_s)) || (args==NULL)) {
     return NRF_AXON_RESULT_FAILURE;
@@ -195,7 +221,7 @@ nrf_axon_result_e nrf_axon_nn_op_extension_tanh(uint16_t argc, NRF_AXON_PLATFORM
    */
   // unpacked input rows always start on a 32bit boundary.
   uint8_t input_extra_stride = (!base1_args->remaining_args.input_is_packed && base1_args->remaining_args.width & 1) ? 1 : 0; 
-  uint8_t output_extra_stride = base1_args->remaining_args.output_bytewidth == 4 ? 0 : (4 - (base1_args->remaining_args.width & 3)) & 3;
+  uint8_t output_extra_stride = packed_output || base1_args->remaining_args.output_bytewidth == 4 ? 0 : (4 - (base1_args->remaining_args.width & 3)) & 3;
 
   int16_t *input_ptr = (int16_t*)base1_args->ptr_args.input;
   union {
@@ -226,7 +252,7 @@ nrf_axon_result_e nrf_axon_nn_op_extension_tanh(uint16_t argc, NRF_AXON_PLATFORM
             output_ptr.i32++;
             break;
           default:
-            nrf_axon_platform_printf("Axon NN: Invalid Sigmoid bytewidth %d\n", base1_args->remaining_args.output_bytewidth);
+            nrf_axon_platform_printf("Axon NN: Invalid Tanh bytewidth %d\n", base1_args->remaining_args.output_bytewidth);
             return -1;
         }
       }
@@ -235,6 +261,20 @@ nrf_axon_result_e nrf_axon_nn_op_extension_tanh(uint16_t argc, NRF_AXON_PLATFORM
     }
   }
   return NRF_AXON_RESULT_SUCCESS;
+}
+/**
+ * tanh version used by compiler versions before 1.1.0.
+ */
+nrf_axon_result_e nrf_axon_nn_op_extension_tanh(uint16_t argc, NRF_AXON_PLATFORM_BITWIDTH_UNSIGNED_TYPE* args)
+{
+  return nrf_axon_nn_op_extension_tanh_base(argc, args, false);
+}
+/**
+ * tanh version used by compiler versions 1.1.0 and later
+ */
+nrf_axon_result_e nrf_axon_nn_op_extension_tanh_v2(uint16_t argc, NRF_AXON_PLATFORM_BITWIDTH_UNSIGNED_TYPE* args)
+{
+  return nrf_axon_nn_op_extension_tanh_base(argc, args, true);
 }
 
 nrf_axon_result_e nrf_axon_nn_op_extension_reshape(uint16_t argc, NRF_AXON_PLATFORM_BITWIDTH_UNSIGNED_TYPE* args)

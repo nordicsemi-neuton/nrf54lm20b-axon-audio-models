@@ -20,6 +20,12 @@ extern "C" {
 
 /**
  * version 
+ * 1.1.0 03/19/2026:
+ * - TFLite 2.19 is supported version (was 2.15)
+ * - More fixes to per-channel quantized dense layers:
+ *     maximum input length increased to 2048 from 2046.
+ *     maximum output length increased to 1024 from 512.
+ *     signmoid and tanh actviation functions after per-channel quantized, fully-connected fixed.
  * 1.0.1 03/04/2026:
  * - softmax after fully-connected with per channel quantization fixed.
  * 1.0.0  03/02/2026:
@@ -46,7 +52,7 @@ extern "C" {
  * 0.1.0  12/11/2025 : 
  * - 1st versioned release
  */
-#define NRF_AXON_NN_COMPILER_VERSION (0x00010001) //4 byte version of MAJOR.MINOR.PATCH format. bits 23:16 => major, bits 15:8 => minor, bits 8:0 => patch 
+#define NRF_AXON_NN_COMPILER_VERSION (0x00010100) //4 byte version of MAJOR.MINOR.PATCH format. bits 23:16 => major, bits 15:8 => minor, bits 8:0 => patch 
 
 
 /**

@@ -28,20 +28,20 @@ class TensorShape:
             shape = np.array(shape)
         if np.any(shape):
             if (shape.size == 2):
-                self.height = shape[0]
-                self.width = shape[1]
+                self.height = int(shape[0])
+                self.width = int(shape[1])
                 self.batch = 1
                 self.depth = 1
             elif (shape.size == 4):
-                self.batch = shape[0]
-                self.height = shape[1]
-                self.width = shape[2]
-                self.depth = shape[3]
+                self.batch = int(shape[0])
+                self.height = int(shape[1])
+                self.width = int(shape[2])
+                self.depth = int(shape[3])
             elif (shape.size == 3):
                 self.batch = 1
-                self.height = shape[0]
-                self.width = shape[1]
-                self.depth = shape[2]
+                self.height = int(shape[0])
+                self.width = int(shape[1])
+                self.depth = int(shape[2])
 
                 # self.batch = 1
                 # self.height = shape[1]
@@ -71,7 +71,7 @@ class TensorShape:
                 #         self.width = shape[2]
                 #         self.depth = 1
             elif (shape.size == 1):
-                self.batch = shape[0]
+                self.batch = int(shape[0])
                 self.height = 1
                 self.width = 1
                 self.depth = 1
@@ -464,7 +464,7 @@ class OperatorOptions:
         min_error_ndx = np.argmin(self.scale_shifts)
         single_scaleshift = self.scale_shifts[min_error_ndx]
         self.scale_multipliers = abs(
-            np.round(scale*2**single_scaleshift)).astype(np.int32)
+            np.round(scale*2**single_scaleshift.astype(np.float32))).astype(np.int32)
         errors_ = util.scale_error(scale, single_scaleshift)
         min_error_ndx = np.argmax(errors_)
         self.scale_shifts = np.array([single_scaleshift], dtype=np.int8)
@@ -1993,7 +1993,7 @@ class AddOptions(OperatorOptions):
 
     def CalculateBPrime(self):
         bias_add_scale_shftd = (-(self.ip1_q['scales']*self.ip1_q['zero_points']+self.ip2_q['scales']
-                                * self.ip2_q['zero_points'])/self.op_scales)*(2**self.scale_shifts[0])
+                                * self.ip2_q['zero_points'])/self.op_scales)*(2**self.scale_shifts[0].astype(np.float32))
         bias_add_array = np.array(bias_add_scale_shftd.astype(np.int32))
         self.b_prime_tensor = bias_add_array
 
@@ -2050,9 +2050,9 @@ class AddOptions(OperatorOptions):
         self.scale_shifts = np.array(
             [min(self.scale_shift_op_1, self.scale_shift_op_2)], dtype=np.int8)
         self.scale_a = abs(
-            np.round(self.scale_ip1*2**self.scale_shifts[0])).astype(np.int32)
+            np.round(self.scale_ip1*2**self.scale_shifts[0].astype(np.float32))).astype(np.int32)
         self.scale_b = abs(
-            np.round(self.scale_ip2*2**self.scale_shifts[0])).astype(np.int32)
+            np.round(self.scale_ip2*2**self.scale_shifts[0].astype(np.float32))).astype(np.int32)
         self.scale_multipliers = np.array([self.scale_a[0], self.scale_b[0]])
         self.ip_zeropoint = 0
         self.ip_q_zeropoint[0] = self.ip_zeropoint
@@ -3250,14 +3250,24 @@ class SupportedOperators():
                     end = -1
                     offset = 0
                     # for i in range(number_of_splits):
-                    record_index = -1
-                    for i, op_o in enumerate(split_op['outputs']):
-                        record_index = i
+                    connecting_op_index = -1
+                    # for i, op_o in enumerate(split_op['outputs']):
+                    for i, op_t in enumerate(split_op['op_tensors']):
                         new_split_op = copy.deepcopy(split_op)
+                        connecting_op_index = i #this may not always be true
+                        """
+                        
+                        """
+                        for j, split_ops_ndx in enumerate(split_op['outputs']):
+                            if op_t in operation_details[split_ops_ndx]['inputs']:
+                                connecting_op_index = j
+                                op_o = split_ops_ndx
+                                break
+
                         new_split_op['op_name'] = ops['op_name'] + \
-                            f"_{i}_connects_{op_o}"
+                            f"_{i}_connects_ops{op_o}_t{op_t}"
                         new_split_op = SplitVOptions.record_op_ndx_for_node(
-                            new_split_op, record_index)
+                            new_split_op, i)
                         size = self.tflite_interpreter.get_tensor(
                             ops['ip_tensors'][1])[i]
                         begin = offset
@@ -3266,7 +3276,7 @@ class SupportedOperators():
                         new_split_op = SplitVOptions.record_begin_end_values(
                             new_split_op, begin, end)
                         new_split_op['axon_op_ops'] = [
-                            split_op['axon_op_ops'][record_index]]
+                            split_op['axon_op_ops'][connecting_op_index]]
                         new_graph.insert(ndx+i, new_split_op)
 
             new_graph = self.update_graph_connections_after_node_insert(
@@ -3476,10 +3486,30 @@ class SupportedOperators():
                                 graph[candidate_pos]['axon_ip_ops'].append(
                                     current_pos)
 
+        # for node in graph:
+        #     if node['axon_ip_ops'] != [-1]:
+        #         node['axon_ip_ops'] = list(dict.fromkeys(node['axon_ip_ops']))
+        #     node['axon_op_ops'] = list(dict.fromkeys(node['axon_op_ops']))
         for node in graph:
+            # deduplicate first
             if node['axon_ip_ops'] != [-1]:
                 node['axon_ip_ops'] = list(dict.fromkeys(node['axon_ip_ops']))
             node['axon_op_ops'] = list(dict.fromkeys(node['axon_op_ops']))
+
+            # reorder inputs according to original input index order
+            if node['axon_ip_ops'] != [-1]:
+                orig_inputs = node.get('orig_ip_op', [])
+                node['axon_ip_ops'].sort(
+                    key=lambda pos: orig_inputs.index(graph[pos]['index'])
+                    if graph[pos]['index'] in orig_inputs else float('inf')
+                )
+
+            # reorder outputs according to original output index order
+            orig_outputs = node.get('orig_op_op', [])
+            node['axon_op_ops'].sort(
+                key=lambda pos: orig_outputs.index(graph[pos]['index'])
+                if graph[pos]['index'] in orig_outputs else float('inf')
+            )
 
         # Cleanup helper fields
         for node in graph:
