@@ -1,0 +1,718 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Model UART Visualizer</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f6f7fb;
+      --panel: #ffffff;
+      --border: #d8dce6;
+      --text: #172033;
+      --muted: #59657d;
+      --accent: #0f766e;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: "SF Pro Text", "Segoe UI", sans-serif;
+      background: linear-gradient(180deg, #edf2ff 0%, var(--bg) 28%);
+      color: var(--text);
+    }
+
+    .app {
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      box-shadow: 0 18px 40px rgba(23, 32, 51, 0.08);
+      padding: 18px;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .header h1 {
+      margin: 0;
+      font-size: 28px;
+      line-height: 1.1;
+    }
+
+    .header p {
+      margin: 8px 0 0;
+      color: var(--muted);
+      max-width: 760px;
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .controls label {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    select,
+    input,
+    button {
+      font: inherit;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      padding: 10px 12px;
+      background: #fff;
+      color: var(--text);
+    }
+
+    button {
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    button.primary {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+
+    button:disabled {
+      opacity: 0.55;
+      cursor: default;
+    }
+
+    .status-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px 20px;
+      align-items: center;
+      margin-bottom: 16px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: #f2f4fa;
+      border-radius: 999px;
+      padding: 8px 12px;
+    }
+
+    #chart {
+      width: 100%;
+      height: 560px;
+      display: block;
+      border-radius: 14px;
+      background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+      border: 1px solid #e8ebf3;
+    }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px 16px;
+      margin-top: 14px;
+      min-height: 24px;
+    }
+
+    .legend-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .legend-color {
+      width: 12px;
+      height: 12px;
+      border-radius: 999px;
+      flex: 0 0 auto;
+    }
+
+    .notice {
+      margin-top: 16px;
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    code {
+      font-family: "SFMono-Regular", "Menlo", monospace;
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="panel">
+      <div class="header">
+        <div>
+          <h1>Model UART Visualizer</h1>
+          <p>Browser mode for raw wakeword or KWS probabilities. The page reads JSON lines from UART via Web Serial and draws a rolling oscilloscope-style plot.</p>
+        </div>
+      </div>
+
+      <div class="controls">
+        <label>
+          Granted ports
+          <select id="portSelect"></select>
+        </label>
+
+        <label>
+          Baudrate
+          <input id="baudrateInput" type="number" min="1" step="1">
+        </label>
+
+        <label>
+          Window, seconds
+          <input id="windowInput" type="number" min="1" step="1">
+        </label>
+
+        <label>
+          Actions
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <button id="refreshPortsButton">Refresh</button>
+            <button id="choosePortButton">Choose Port</button>
+            <button id="connectButton" class="primary">Connect</button>
+            <button id="disconnectButton" disabled>Disconnect</button>
+          </div>
+        </label>
+      </div>
+
+      <div class="status-row">
+        <span class="badge" id="modeBadge">mode: unknown</span>
+        <span class="badge" id="statusBadge">Disconnected</span>
+      </div>
+
+      <canvas id="chart"></canvas>
+      <div id="legend" class="legend"></div>
+
+      <div class="notice">
+        Use Chrome or Edge. The first connection must be granted via <code>Choose Port</code>.
+        The device should send one JSON object per line: first <code>meta</code>, then repeated <code>frame</code>.
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const defaultBaudrate = Number(params.get("baudrate") || 115200);
+    const defaultWindowSeconds = Number(params.get("windowSeconds") || 15);
+
+    const portSelect = document.getElementById("portSelect");
+    const baudrateInput = document.getElementById("baudrateInput");
+    const windowInput = document.getElementById("windowInput");
+    const refreshPortsButton = document.getElementById("refreshPortsButton");
+    const choosePortButton = document.getElementById("choosePortButton");
+    const connectButton = document.getElementById("connectButton");
+    const disconnectButton = document.getElementById("disconnectButton");
+    const modeBadge = document.getElementById("modeBadge");
+    const statusBadge = document.getElementById("statusBadge");
+    const legend = document.getElementById("legend");
+    const canvas = document.getElementById("chart");
+    const context = canvas.getContext("2d");
+
+    baudrateInput.value = String(defaultBaudrate);
+    windowInput.value = String(defaultWindowSeconds);
+
+    const state = {
+      ports: [],
+      port: null,
+      reader: null,
+      inputDone: null,
+      mode: "unknown",
+      xLabel: "Time (s)",
+      yLabel: "Probability",
+      seriesOrder: [],
+      samples: [],
+    };
+
+    const palette = [
+      "#0f766e",
+      "#2563eb",
+      "#dc2626",
+      "#9333ea",
+      "#ea580c",
+      "#16a34a",
+      "#0891b2",
+      "#c026d3",
+      "#4f46e5",
+      "#b45309",
+      "#be123c",
+      "#0f172a",
+    ];
+
+    class LineBreakTransformer {
+      constructor() {
+        this.container = "";
+      }
+
+      transform(chunk, controller) {
+        this.container += chunk;
+        const lines = this.container.split("\n");
+        this.container = lines.pop();
+        for (const line of lines) {
+          controller.enqueue(line);
+        }
+      }
+
+      flush(controller) {
+        if (this.container) {
+          controller.enqueue(this.container);
+        }
+      }
+    }
+
+    function setStatus(text) {
+      statusBadge.textContent = text;
+    }
+
+    function updateMode(mode) {
+      modeBadge.textContent = `mode: ${mode}`;
+    }
+
+    function currentWindowSeconds() {
+      return Math.max(1, Number(windowInput.value) || defaultWindowSeconds);
+    }
+
+    function colorForSeries(index) {
+      return palette[index % palette.length];
+    }
+
+    function renderLegend() {
+      legend.innerHTML = "";
+
+      for (const [index, name] of state.seriesOrder.entries()) {
+        const item = document.createElement("div");
+        item.className = "legend-item";
+
+        const dot = document.createElement("span");
+        dot.className = "legend-color";
+        dot.style.background = colorForSeries(index);
+
+        const label = document.createElement("span");
+        label.textContent = name;
+
+        item.append(dot, label);
+        legend.appendChild(item);
+      }
+    }
+
+    function portLabel(port, index) {
+      const info = port.getInfo ? port.getInfo() : {};
+      const vid = typeof info.usbVendorId === "number" ? info.usbVendorId.toString(16).padStart(4, "0") : "????";
+      const pid = typeof info.usbProductId === "number" ? info.usbProductId.toString(16).padStart(4, "0") : "????";
+      return `Port ${index + 1} (VID:${vid} PID:${pid})`;
+    }
+
+    async function refreshPorts() {
+      if (!("serial" in navigator)) {
+        setStatus("Web Serial is not available in this browser");
+        return;
+      }
+
+      state.ports = await navigator.serial.getPorts();
+      portSelect.innerHTML = "";
+
+      if (!state.ports.length) {
+        const option = document.createElement("option");
+        option.textContent = "No granted ports";
+        option.value = "";
+        portSelect.appendChild(option);
+      } else {
+        state.ports.forEach((port, index) => {
+          const option = document.createElement("option");
+          option.value = String(index);
+          option.textContent = portLabel(port, index);
+          portSelect.appendChild(option);
+        });
+      }
+    }
+
+    async function choosePort() {
+      if (!("serial" in navigator)) {
+        setStatus("Web Serial is not available in this browser");
+        return;
+      }
+
+      try {
+        await navigator.serial.requestPort();
+        await refreshPorts();
+        if (state.ports.length) {
+          portSelect.value = String(state.ports.length - 1);
+        }
+        setStatus("Port permission granted");
+      } catch (error) {
+        if (error && error.name === "NotFoundError") {
+          setStatus("Port selection cancelled");
+          return;
+        }
+        setStatus(`Port request failed: ${error}`);
+      }
+    }
+
+    function extractSeriesNames(meta) {
+      const names = [];
+      for (const item of meta.series || []) {
+        if (typeof item === "string" && item) {
+          names.push(item);
+        } else if (item && typeof item.name === "string" && item.name) {
+          names.push(item.name);
+        }
+      }
+      return names;
+    }
+
+    function ensureSeries(names) {
+      let changed = false;
+      for (const name of names) {
+        if (!state.seriesOrder.includes(name)) {
+          state.seriesOrder.push(name);
+          changed = true;
+        }
+      }
+      if (changed) {
+        renderLegend();
+      }
+    }
+
+    function trimSamples() {
+      if (!state.samples.length) {
+        return;
+      }
+      const latest = state.samples[state.samples.length - 1].timestamp;
+      const minTimestamp = latest - currentWindowSeconds();
+      while (state.samples.length && state.samples[0].timestamp < minTimestamp) {
+        state.samples.shift();
+      }
+    }
+
+    function applyMeta(meta) {
+      const names = extractSeriesNames(meta);
+      if (!names.length) {
+        return;
+      }
+
+      state.mode = typeof meta.mode === "string" ? meta.mode : "unknown";
+      state.xLabel = typeof meta.x_label === "string" ? meta.x_label : "Time (s)";
+      state.yLabel = typeof meta.y_label === "string" ? meta.y_label : "Probability";
+      state.seriesOrder = [...names];
+      state.samples = [];
+
+      updateMode(state.mode);
+      renderLegend();
+      setStatus(`Metadata received: ${state.seriesOrder.length} series`);
+    }
+
+    function applyFrame(frame) {
+      const values = {};
+      if (Array.isArray(frame.entities)) {
+        for (const entity of frame.entities) {
+          if (!entity || typeof entity.name !== "string" || typeof entity.value !== "number") {
+            continue;
+          }
+          values[entity.name] = entity.value;
+        }
+      }
+
+      if (Array.isArray(frame.values) && state.seriesOrder.length) {
+        for (let index = 0; index < frame.values.length && index < state.seriesOrder.length; index += 1) {
+          const value = frame.values[index];
+          if (typeof value !== "number") {
+            continue;
+          }
+          values[state.seriesOrder[index]] = value;
+        }
+      }
+
+      const names = Object.keys(values);
+      if (!names.length) {
+        return;
+      }
+
+      ensureSeries(names);
+
+      let timestamp = performance.now() / 1000;
+      if (typeof frame.timestamp_ms === "number") {
+        timestamp = frame.timestamp_ms / 1000;
+      } else if (typeof frame.timestamp_s === "number") {
+        timestamp = frame.timestamp_s;
+      }
+
+      state.samples.push({ timestamp, values });
+      trimSamples();
+      setStatus(`Streaming ${state.seriesOrder.length} series`);
+    }
+
+    function handleLine(line) {
+      const text = line.trim();
+      if (!text.startsWith("{")) {
+        return;
+      }
+
+      let payload;
+      try {
+        payload = JSON.parse(text);
+      } catch {
+        return;
+      }
+
+      if (!payload || typeof payload !== "object") {
+        return;
+      }
+
+      if (payload.type === "meta") {
+        applyMeta(payload);
+        return;
+      }
+
+      if (payload.type === "frame" || Array.isArray(payload.entities) || Array.isArray(payload.values)) {
+        applyFrame(payload);
+      }
+    }
+
+    async function disconnect() {
+      disconnectButton.disabled = true;
+
+      if (state.reader) {
+        try {
+          await state.reader.cancel();
+        } catch {}
+        try {
+          state.reader.releaseLock();
+        } catch {}
+        state.reader = null;
+      }
+
+      if (state.inputDone) {
+        try {
+          await state.inputDone;
+        } catch {}
+        state.inputDone = null;
+      }
+
+      if (state.port) {
+        try {
+          await state.port.close();
+        } catch {}
+        state.port = null;
+      }
+
+      connectButton.disabled = false;
+      setStatus("Disconnected");
+    }
+
+    async function connect() {
+      if (!("serial" in navigator)) {
+        setStatus("Web Serial is not available in this browser");
+        return;
+      }
+
+      if (!state.ports.length) {
+        setStatus("No granted ports. Click Choose Port first.");
+        return;
+      }
+
+      const index = Number(portSelect.value || 0);
+      const port = state.ports[index];
+      if (!port) {
+        setStatus("Select a granted port first.");
+        return;
+      }
+
+      const baudRate = Math.max(1, Number(baudrateInput.value) || defaultBaudrate);
+
+      try {
+        await port.open({ baudRate });
+        state.port = port;
+
+        const decoder = new TextDecoderStream();
+        state.inputDone = port.readable.pipeTo(decoder.writable);
+        state.reader = decoder.readable
+          .pipeThrough(new TransformStream(new LineBreakTransformer()))
+          .getReader();
+
+        connectButton.disabled = true;
+        disconnectButton.disabled = false;
+        setStatus(`Connected at ${baudRate} baud`);
+
+        while (state.reader) {
+          const { value, done } = await state.reader.read();
+          if (done) {
+            break;
+          }
+          handleLine(value);
+        }
+      } catch (error) {
+        setStatus(`Connect failed: ${error}`);
+      } finally {
+        await disconnect();
+      }
+    }
+
+    function resizeCanvas() {
+      const ratio = window.devicePixelRatio || 1;
+      const width = Math.max(320, Math.floor(canvas.clientWidth * ratio));
+      const height = Math.max(240, Math.floor(canvas.clientHeight * ratio));
+      if (canvas.width !== width || canvas.height !== height) {
+        canvas.width = width;
+        canvas.height = height;
+      }
+      context.setTransform(1, 0, 0, 1, 0, 0);
+      context.scale(ratio, ratio);
+    }
+
+    function drawChart() {
+      resizeCanvas();
+
+      const width = canvas.clientWidth;
+      const height = canvas.clientHeight;
+      context.clearRect(0, 0, width, height);
+
+      const left = 72;
+      const right = 24;
+      const top = 28;
+      const bottom = 54;
+      const plotWidth = width - left - right;
+      const plotHeight = height - top - bottom;
+
+      context.strokeStyle = "#d8deeb";
+      context.lineWidth = 1;
+      context.beginPath();
+      context.rect(left, top, plotWidth, plotHeight);
+      context.stroke();
+
+      const latest = state.samples.length ? state.samples[state.samples.length - 1].timestamp : 0;
+      const windowSeconds = currentWindowSeconds();
+      const minTimestamp = latest - windowSeconds;
+
+      let yMin = 0;
+      let yMax = 1;
+      for (const sample of state.samples) {
+        for (const value of Object.values(sample.values)) {
+          if (Number.isFinite(value)) {
+            yMin = Math.min(yMin, value);
+            yMax = Math.max(yMax, value);
+          }
+        }
+      }
+
+      if (yMax - yMin < 0.1) {
+        yMax += 0.05;
+        yMin -= 0.05;
+      }
+
+      const yPadding = Math.max(0.05, (yMax - yMin) * 0.1);
+      yMin -= yPadding;
+      yMax += yPadding;
+
+      for (let gridIndex = 0; gridIndex <= 5; gridIndex += 1) {
+        const y = top + (plotHeight / 5) * gridIndex;
+        context.strokeStyle = "#edf1f7";
+        context.beginPath();
+        context.moveTo(left, y);
+        context.lineTo(left + plotWidth, y);
+        context.stroke();
+
+        const value = yMax - ((yMax - yMin) / 5) * gridIndex;
+        context.fillStyle = "#59657d";
+        context.font = "12px SF Pro Text, Segoe UI, sans-serif";
+        context.fillText(value.toFixed(2), 12, y + 4);
+      }
+
+      for (let gridIndex = 0; gridIndex <= 5; gridIndex += 1) {
+        const x = left + (plotWidth / 5) * gridIndex;
+        context.strokeStyle = "#edf1f7";
+        context.beginPath();
+        context.moveTo(x, top);
+        context.lineTo(x, top + plotHeight);
+        context.stroke();
+
+        const value = -windowSeconds + (windowSeconds / 5) * gridIndex;
+        context.fillStyle = "#59657d";
+        context.font = "12px SF Pro Text, Segoe UI, sans-serif";
+        context.fillText(value.toFixed(1), x - 10, height - 18);
+      }
+
+      context.fillStyle = "#172033";
+      context.font = "600 14px SF Pro Text, Segoe UI, sans-serif";
+      context.fillText(state.xLabel, left + plotWidth / 2 - 28, height - 8);
+
+      context.save();
+      context.translate(18, top + plotHeight / 2 + 36);
+      context.rotate(-Math.PI / 2);
+      context.fillText(state.yLabel, 0, 0);
+      context.restore();
+
+      state.seriesOrder.forEach((name, index) => {
+        context.strokeStyle = colorForSeries(index);
+        context.lineWidth = 2;
+        context.beginPath();
+
+        let hasPoint = false;
+        for (const sample of state.samples) {
+          const value = sample.values[name];
+          if (!Number.isFinite(value)) {
+            continue;
+          }
+
+          const x = left + ((sample.timestamp - minTimestamp) / windowSeconds) * plotWidth;
+          const y = top + (1 - (value - yMin) / (yMax - yMin)) * plotHeight;
+          if (!hasPoint) {
+            context.moveTo(x, y);
+            hasPoint = true;
+          } else {
+            context.lineTo(x, y);
+          }
+        }
+
+        if (hasPoint) {
+          context.stroke();
+        }
+      });
+
+      requestAnimationFrame(drawChart);
+    }
+
+    refreshPortsButton.addEventListener("click", refreshPorts);
+    choosePortButton.addEventListener("click", choosePort);
+    connectButton.addEventListener("click", connect);
+    disconnectButton.addEventListener("click", disconnect);
+    windowInput.addEventListener("change", trimSamples);
+
+    if ("serial" in navigator) {
+      navigator.serial.addEventListener("connect", refreshPorts);
+      navigator.serial.addEventListener("disconnect", refreshPorts);
+    } else {
+      setStatus("Web Serial is not available in this browser");
+    }
+
+    refreshPorts();
+    drawChart();
+  </script>
+</body>
+</html>

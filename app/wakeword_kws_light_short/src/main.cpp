@@ -15,7 +15,9 @@
 
 #define MODEL_WAKEWORD_LABEL        "Okay Nordic"
 #define KEYWORD_SPOTTING_TIMEOUT_MS 7000
+#define DEMO_FINAL_DETECTIONS_ONLY  0
 #define PRINT_RAW_PROBABILITY       1
+#define PRINT_KEYWORD_CLASS_ACTIVITY 1
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -27,10 +29,10 @@ typedef enum application_state_e
 
 typedef enum keyword_labels_e
 {
-    KEYWORD_OFF    = 0,
-    KEYWORD_ON      = 1,
-    KEYWORD_OTHER    = 2,
-    KEYWORD_SILENCE      = 3,
+    KEYWORD_OFF     = 0,
+    KEYWORD_ON    = 1,
+    KEYWORD_OTHER     = 2,
+    KEYWORD_SILENCE    = 3,
     KEYWORD_SWITCH     = 4,
 
     KEYWORDS_cnt
@@ -40,6 +42,7 @@ typedef struct
 {
     const char* name;
     size_t      count_needed;
+    uint8_t     threshold_percent;
 } keyword_class_cfg_t;
 
 typedef struct
@@ -66,24 +69,27 @@ typedef struct
 
 static bool is_wakeword_detected(flt32_t probability);
 static void reset_keyword_detection_state(void);
-static bool is_keyword_pair_component(uint16_t predicted_class);
+static bool is_keyword_command_component(uint16_t predicted_class);
 static bool is_keyword_phrase_first_word(uint16_t predicted_class);
 static bool is_keyword_phrase_second_word(uint16_t predicted_class);
+static bool is_valid_keyword_command_pair(uint16_t first_class, uint16_t second_class);
 static const keyword_class_cfg_t* get_keyword_class_cfg(uint16_t predicted_class);
-static bool try_detect_keyword_phrase(uint16_t     predicted_class,
-                                      flt32_t      probability,
-                                      const char** pp_first_keyword_name,
-                                      const char** pp_second_keyword_name,
-                                      uint8_t*     p_average_probability);
+static bool is_keyword_probability_above_threshold(uint16_t predicted_class, flt32_t probability);
+static bool try_detect_keyword_command(uint16_t     predicted_class,
+                                       flt32_t      probability,
+                                       const char** pp_first_keyword_name,
+                                       const char** pp_second_keyword_name,
+                                       bool*        p_has_second_keyword,
+                                       uint8_t*     p_average_probability);
 
 //////////////////////////////////////////////////////////////////////////////
 
 static const keyword_class_cfg_t KEYWORD_CLASSES_CFG[] = {
-    [KEYWORD_END] = { .name = "OFF", .count_needed = 1 },
-    [KEYWORD_FOOD] = { .name = "ON", .count_needed = 1 },
-    [KEYWORD_MUSIC] = { .name = "OTHER", .count_needed = 2 },
-    [KEYWORD_OTHER] = { .name = "SILENCE", .count_needed = 4 },
-    [KEYWORD_SILENCE] = { .name = "SWITCH", .count_needed = 4 },
+    [KEYWORD_OFF] = { .name = "OFF", .count_needed = 2, .threshold_percent = 0 },
+    [KEYWORD_ON] = { .name = "ON", .count_needed = 2, .threshold_percent = 0 },
+    [KEYWORD_OTHER] = { .name = "OTHER", .count_needed = 4, .threshold_percent = 0 },
+    [KEYWORD_SILENCE] = { .name = "SILENCE", .count_needed = 4, .threshold_percent = 0 },
+    [KEYWORD_SWITCH] = { .name = "SWITCH", .count_needed = 2, .threshold_percent = 0 },
 };
 
 static keyword_runtime_ctx_t s_keyword_runtime_ctx;
@@ -93,10 +99,11 @@ static keyword_phrase_ctx_t  s_keyword_phrase_ctx;
 
 int main()
 {
+#if !DEMO_FINAL_DETECTIONS_ONLY
     printk("Starting Wakeword gated KWS Application...\n");
     printk("\tWakeword: %s\n", MODEL_WAKEWORD_LABEL);
-    printk("\tSupported commands: START FOOD, START MUSIC, START TRAINIG, ");
-    printk("END FOOD, END MUSIC, END TRAINIG\n");
+    printk("\tSupported commands: MUSIC DOWN, MUSIC UP, NEXT TRACK, ");
+    printk("PREVIOUS TRACK, PLAY MUSIC, STOP MUSIC\n");
     printk("\tIgnored classes: %s, %s\n",
            KEYWORD_CLASSES_CFG[KEYWORD_OTHER].name,
            KEYWORD_CLASSES_CFG[KEYWORD_SILENCE].name);
@@ -106,8 +113,9 @@ int main()
            libver.field.major,
            libver.field.minor,
            libver.field.patch);
+#endif
 
-    nrf_edgeai_t* p_wakeword_model = nrf_edgeai_user_model_wakeword();
+    nrf_edgeai_t* p_wakeword_model = nrf_edgeai_user_model_92597();
     nrf_edgeai_t* p_kws_model      = nrf_edgeai_user_model_kws();
 
     // Initialize wakeword model
@@ -136,7 +144,9 @@ int main()
     uint32_t      kws_start_time = 0;
 
     application_state_t app_state = APP_WAITING_FOR_WAKEWORD;
+#if !DEMO_FINAL_DETECTIONS_ONLY
     printk("Waiting for wakeword...\n");
+#endif
 
     while (true)
     {
@@ -168,7 +178,9 @@ int main()
 
                 if (is_wakeword_detected(probability))
                 {
+#if !DEMO_FINAL_DETECTIONS_ONLY
                     printk("Wakeword detected! Starting keyword spotting...\n");
+#endif
                     // Re-initialize KWS model to reset its state after wakeword detection
                     nrf_edgeai_model_axon_init_persistent_vars(p_kws_model);
                     reset_keyword_detection_state();
@@ -181,7 +193,9 @@ int main()
             {
                 if (k_uptime_get_32() - kws_start_time > KEYWORD_SPOTTING_TIMEOUT_MS)
                 {
+#if !DEMO_FINAL_DETECTIONS_ONLY
                     printk("Keyword spotting timeout\nWaiting for wakeword...\n");
+#endif
                     // Re-initialize WW model to reset its state after keyword detection
                     nrf_edgeai_model_axon_init_persistent_vars(p_wakeword_model);
                     reset_keyword_detection_state();
@@ -203,20 +217,29 @@ int main()
 
                 const char* first_keyword_name      = NULL;
                 const char* second_keyword_name     = NULL;
+                bool        has_second_keyword      = false;
                 uint8_t     average_probability_pct = 0;
 
-                if (try_detect_keyword_phrase(predicted_class,
-                                              probability,
-                                              &first_keyword_name,
-                                              &second_keyword_name,
-                                              &average_probability_pct))
+                if (try_detect_keyword_command(predicted_class,
+                                               probability,
+                                               &first_keyword_name,
+                                               &second_keyword_name,
+                                               &has_second_keyword,
+                                               &average_probability_pct))
                 {
-                    printk("Second keyword detected: %s\n", second_keyword_name);
-                    printk("Keyword detected: %s %s, %d %%\n",
-                           first_keyword_name,
-                           second_keyword_name,
-                           average_probability_pct);
-                    kws_start_time = k_uptime_get_32();  // reset timeout after keyword detection
+
+                    printk("Keyword detected: %s, %d %%\n",
+                            first_keyword_name,
+                            average_probability_pct);
+
+                    /* Return to wakeword mode immediately after a valid command. */
+                    nrf_edgeai_model_axon_init_persistent_vars(p_wakeword_model);
+                    reset_keyword_detection_state();
+                    app_state = APP_WAITING_FOR_WAKEWORD;
+
+#if !DEMO_FINAL_DETECTIONS_ONLY
+                    printk("Waiting for wakeword...\n");
+#endif
                 }
             }
             break;
@@ -241,7 +264,7 @@ static void reset_keyword_detection_state(void)
 
 //////////////////////////////////////////////////////////////////////////////
 
-static bool is_keyword_pair_component(uint16_t predicted_class)
+static bool is_keyword_command_component(uint16_t predicted_class)
 {
     return (predicted_class < KEYWORDS_cnt) && (predicted_class != KEYWORD_OTHER) &&
            (predicted_class != KEYWORD_SILENCE);
@@ -251,18 +274,12 @@ static bool is_keyword_pair_component(uint16_t predicted_class)
 
 static bool is_keyword_phrase_first_word(uint16_t predicted_class)
 {
-    return (predicted_class == KEYWORD_START) || (predicted_class == KEYWORD_END);
+    return (predicted_class == KEYWORD_ON) || (predicted_class == KEYWORD_OFF) ||
+           (predicted_class == KEYWORD_SWITCH);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static bool is_keyword_phrase_second_word(uint16_t predicted_class)
-{
-    return (predicted_class == KEYWORD_FOOD) || (predicted_class == KEYWORD_MUSIC) ||
-           (predicted_class == KEYWORD_TRAINING);
-}
-
-//////////////////////////////////////////////////////////////////////////////
 
 static const keyword_class_cfg_t* get_keyword_class_cfg(uint16_t predicted_class)
 {
@@ -272,10 +289,24 @@ static const keyword_class_cfg_t* get_keyword_class_cfg(uint16_t predicted_class
 
 //////////////////////////////////////////////////////////////////////////////
 
+static bool is_keyword_probability_above_threshold(uint16_t predicted_class, flt32_t probability)
+{
+    const keyword_class_cfg_t* p_class_cfg = get_keyword_class_cfg(predicted_class);
+
+    if (p_class_cfg->threshold_percent == 0)
+    {
+        return true;
+    }
+
+    return (probability * 100.0f) >= (flt32_t)p_class_cfg->threshold_percent;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
 static bool is_wakeword_detected(flt32_t probability)
 {
-#define THRESHOLD  0.95f
-#define POS_IN_ROW 12
+#define THRESHOLD  0.85f
+#define POS_IN_ROW 14
     static bool   result_row[POS_IN_ROW];
     static size_t filled = 0;
 
@@ -301,9 +332,9 @@ static bool is_wakeword_detected(flt32_t probability)
     {
         if (!result_row[i])
         {
-        #if PRINT_RAW_PROBABILITY
+#if PRINT_RAW_PROBABILITY
             printk("Wakeword window fill: %u \tprob : %0.3f\n", (unsigned int)filled, probability);
-        #endif
+#endif
             return false;
         }
     }
@@ -317,16 +348,22 @@ static bool is_wakeword_detected(flt32_t probability)
 
 //////////////////////////////////////////////////////////////////////////////
 
-static bool try_detect_keyword_phrase(uint16_t     predicted_class,
-                                      flt32_t      probability,
-                                      const char** pp_first_keyword_name,
-                                      const char** pp_second_keyword_name,
-                                      uint8_t*     p_average_probability)
+static bool try_detect_keyword_command(uint16_t     predicted_class,
+                                       flt32_t      probability,
+                                       const char** pp_first_keyword_name,
+                                       const char** pp_second_keyword_name,
+                                       bool*        p_has_second_keyword,
+                                       uint8_t*     p_average_probability)
 {
-    const keyword_class_cfg_t* p_class_cfg = get_keyword_class_cfg(predicted_class);
+    const keyword_class_cfg_t* p_class_cfg          = get_keyword_class_cfg(predicted_class);
+    const bool                 is_command_component =
+        is_keyword_command_component(predicted_class);
+    const bool passes_threshold =
+        is_command_component && is_keyword_probability_above_threshold(predicted_class, probability);
 
     *pp_first_keyword_name = NULL;
     *pp_second_keyword_name = NULL;
+    *p_has_second_keyword = false;
     *p_average_probability = 0;
 
     const uint32_t now_ms = k_uptime_get_32();
@@ -341,8 +378,16 @@ static bool try_detect_keyword_phrase(uint16_t     predicted_class,
         s_keyword_runtime_ctx.wait_for_class_change = false;
     }
 
-    if (!is_keyword_pair_component(predicted_class))
+    if (!passes_threshold)
     {
+        if (is_command_component)
+        {
+            /* A low-confidence keyword should break the current confirmation streak. */
+            s_keyword_runtime_ctx.has_active_class    = false;
+            s_keyword_runtime_ctx.count               = 0;
+            s_keyword_runtime_ctx.average_probability = 0;
+        }
+
         if ((s_keyword_runtime_ctx.non_keyword_count == 0) ||
             (s_keyword_runtime_ctx.non_keyword_class != predicted_class))
         {
@@ -394,7 +439,7 @@ static bool try_detect_keyword_phrase(uint16_t     predicted_class,
         s_keyword_phrase_ctx.detected_at_ms = now_ms;
     }
 
-#if PRINT_RAW_PROBABILITY
+#if !DEMO_FINAL_DETECTIONS_ONLY && PRINT_KEYWORD_CLASS_ACTIVITY
     printk("Keyword model class %s, count: %u \tprob : %0.3f\n",
            get_keyword_class_cfg(s_keyword_runtime_ctx.predicted_class)->name,
            (unsigned int)s_keyword_runtime_ctx.count,
@@ -416,40 +461,28 @@ static bool try_detect_keyword_phrase(uint16_t     predicted_class,
     s_keyword_runtime_ctx.wait_for_class_change = true;
     s_keyword_runtime_ctx.blocked_class         = predicted_class;
 
-    if (!s_keyword_phrase_ctx.has_first_keyword)
-    {
-        if (!is_keyword_phrase_first_word(predicted_class))
-        {
-            return false;
-        }
-
-        s_keyword_phrase_ctx.has_first_keyword = true;
-        s_keyword_phrase_ctx.first_class       = predicted_class;
-        s_keyword_phrase_ctx.first_probability = detected_probability;
-        s_keyword_phrase_ctx.detected_at_ms    = now_ms;
-        printk("First keyword detected: %s\n", p_class_cfg->name);
-        return false;
-    }
 
     if (is_keyword_phrase_first_word(predicted_class))
     {
         s_keyword_phrase_ctx.first_class       = predicted_class;
         s_keyword_phrase_ctx.first_probability = detected_probability;
         s_keyword_phrase_ctx.detected_at_ms    = now_ms;
+#if !DEMO_FINAL_DETECTIONS_ONLY
         printk("First keyword detected: %s\n", p_class_cfg->name);
+#endif
         return false;
     }
 
-    if (!is_keyword_phrase_second_word(predicted_class))
-    {
-        return false;
-    }
-
-    *pp_first_keyword_name = get_keyword_class_cfg(s_keyword_phrase_ctx.first_class)->name;
-    *pp_second_keyword_name = p_class_cfg->name;
-    *p_average_probability =
-        (uint8_t)(((s_keyword_phrase_ctx.first_probability + detected_probability) * 50.0f));
-
-    memset(&s_keyword_phrase_ctx, 0, sizeof(s_keyword_phrase_ctx));
-    return true;
+    /* Unsupported combinations are ignored, but the confirmed first word stays active. */
+    return false;
 }
+
+
+
+
+
+// 0	OFF
+// 1	ON
+// 2	OTHER
+// 3	SILENCE
+// 4	SWITCH
