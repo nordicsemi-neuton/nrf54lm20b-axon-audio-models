@@ -8,7 +8,24 @@ Axon NPU Release Notes
    :local:
    :depth: 2
 
-Release 1.0.1  05 Mar 2026
+Release 1.1.0  19 Mar 2026
+******************************
+
+* Compiler release 1.1.0
+* Manifest (west.yml) pulls v3.3.0-preview2 tag of sdk-nrf (SHA-1 ede152ec21).
+* Tested and built with SDK toolchain version v3.2.0. Users are recommended to use this version as well.
+
+New features
+------------
+* TFLite v2.19 is now the officially supported version of TFLite (2.15 should still work)
+* Build support for nRF54lm20a is replaced with nRF54lm20b. New board name is 'nrf54lm20dk/nrf54lm20b/cpuapp' in build command.
+
+Bug fixes
+------------
+* Fully connected layers with up to 2048 input length and 1024 outpu length fixed with TFLite 2.19 (previous version worked to 2046 and 512)
+* Sigmoid and Tanh after fully connected  fixed for TFLite 2.19
+
+Release 1.0.1  06 Mar 2026
 ******************************
 
 * Compiler release 1.0.1

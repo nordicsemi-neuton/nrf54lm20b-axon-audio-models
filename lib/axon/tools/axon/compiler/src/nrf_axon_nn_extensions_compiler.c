@@ -93,7 +93,8 @@ static void sigmoid_mem_usage(
 )
 {
   *output_ptr_offset = 0; /* output will be on 32bit boundary*/
-  *output_stride = (uint16_t)NRF_AXON_NN_STRIDE_WIDTH_IN_BYTES(layer->output_dimensions.width, layer->output_dimensions.byte_width, 0);
+  // sigmoid output is always packed.
+  *output_stride = (uint16_t)NRF_AXON_NN_STRIDE_WIDTH_IN_BYTES(layer->output_dimensions.width, layer->output_dimensions.byte_width, 1);
   // no temp memory needed
   *scratch_mem_needed_size = 0;
   /**
@@ -135,8 +136,8 @@ static nrf_axon_compiler_result_e sigmoid_layer_compile(
 
   // sigmoid is implemented by the cpu in function nrf_axon_nn_op_extension_sigmoid
   return nrf_axon_nn_cmd_buff_add_software_op(
-                        nrf_axon_nn_op_extension_sigmoid, /**< address of function to invoke */
-                        "nrf_axon_nn_op_extension_sigmoid", /** < name of function to invoke. This is the symbol name that will be placed in the compiled output. */
+                        nrf_axon_nn_op_extension_sigmoid_v2, /**< address of function to invoke */
+                        "nrf_axon_nn_op_extension_sigmoid_v2", /** < name of function to invoke. This is the symbol name that will be placed in the compiled output. */
                         sizeof (args.ptr_args)/sizeof(void *), /**< number of pointer arguments in ptr_argv */
                         sizeof(args.remaining_args), /**< size in bytes of remaining_args */
                         (NRF_AXON_PLATFORM_BITWIDTH_SIGNED_TYPE *)&args.ptr_args, /**< actual arguments to pass to the software function */
@@ -152,7 +153,8 @@ static void tanh_mem_usage(
 )
 {
   *output_ptr_offset = 0; /* output will be on 32bit boundary*/
-  *output_stride = (uint16_t)NRF_AXON_NN_STRIDE_WIDTH_IN_BYTES(layer->output_dimensions.width, layer->output_dimensions.byte_width, 0);
+  // tanh output is always packed.
+  *output_stride = (uint16_t)NRF_AXON_NN_STRIDE_WIDTH_IN_BYTES(layer->output_dimensions.width, layer->output_dimensions.byte_width, 1);
   /**
    * 1:1 correlation between inputs. 
    * safe to overwrite input if input is unpacked and input size <= output size.
@@ -194,8 +196,8 @@ static nrf_axon_compiler_result_e tanh_layer_compile(
 
   // tanh is implemented by the cpu in function nrf_axon_nn_op_extension_tanh
   return nrf_axon_nn_cmd_buff_add_software_op(
-                        nrf_axon_nn_op_extension_tanh, /**< address of function to invoke */
-                        "nrf_axon_nn_op_extension_tanh", /** < name of function to invoke. This is the symbol name that will be placed in the compiled output. */
+                        nrf_axon_nn_op_extension_tanh_v2, /**< address of function to invoke */
+                        "nrf_axon_nn_op_extension_tanh_v2", /** < name of function to invoke. This is the symbol name that will be placed in the compiled output. */
                         sizeof (args.ptr_args)/sizeof(void *), /**< number of pointer arguments in ptr_argv */
                         sizeof(args.remaining_args), /**< size in bytes of remaining_args */
                         (NRF_AXON_PLATFORM_BITWIDTH_SIGNED_TYPE *)&args.ptr_args, /**< actual arguments to pass to the software function */

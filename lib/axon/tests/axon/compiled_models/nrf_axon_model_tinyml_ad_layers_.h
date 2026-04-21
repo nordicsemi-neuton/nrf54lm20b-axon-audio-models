@@ -1,7 +1,7 @@
 /*********************************************************************************
  * Auto-generated nrf Axon compiled neural network model header file.
  * Model Name: tinyml_ad
- * Axon Neural Network Compiler Version: 1.0.1
+ * Axon Neural Network Compiler Version: 1.1.0
  *********************************************************************************/
 #ifdef __cplusplus
 extern "C" {
@@ -23,7 +23,7 @@ const NRF_AXON_PLATFORM_BITWIDTH_UNSIGNED_TYPE cmd_buffer_tinyml_ad_0_0[35] = {
 };
 const nrf_axon_nn_compiled_model_layer_s model_tinyml_ad_0_0 = {
   .base = {
-    .compiler_version = 0x00010001,
+    .compiler_version = 0x00010100,
     .model_name = "tinyml_ad",
     .labels = NULL,
     .inputs = {
@@ -81,7 +81,7 @@ const nrf_axon_nn_compiled_model_layer_s model_tinyml_ad_0_0 = {
 /*********************************************************************************
  * Auto-generated nrf Axon compiled neural network model header file.
  * Model Name: tinyml_ad
- * Axon Neural Network Compiler Version: 1.0.1
+ * Axon Neural Network Compiler Version: 1.1.0
  *********************************************************************************/
 #ifdef __cplusplus
 extern "C" {
@@ -103,7 +103,7 @@ const NRF_AXON_PLATFORM_BITWIDTH_UNSIGNED_TYPE cmd_buffer_tinyml_ad_1_1[35] = {
 };
 const nrf_axon_nn_compiled_model_layer_s model_tinyml_ad_1_1 = {
   .base = {
-    .compiler_version = 0x00010001,
+    .compiler_version = 0x00010100,
     .model_name = "tinyml_ad",
     .labels = NULL,
     .inputs = {
@@ -158,7 +158,7 @@ const nrf_axon_nn_compiled_model_layer_s model_tinyml_ad_1_1 = {
 /*********************************************************************************
  * Auto-generated nrf Axon compiled neural network model header file.
  * Model Name: tinyml_ad
- * Axon Neural Network Compiler Version: 1.0.1
+ * Axon Neural Network Compiler Version: 1.1.0
  *********************************************************************************/
 #ifdef __cplusplus
 extern "C" {
@@ -180,7 +180,7 @@ const NRF_AXON_PLATFORM_BITWIDTH_UNSIGNED_TYPE cmd_buffer_tinyml_ad_2_2[35] = {
 };
 const nrf_axon_nn_compiled_model_layer_s model_tinyml_ad_2_2 = {
   .base = {
-    .compiler_version = 0x00010001,
+    .compiler_version = 0x00010100,
     .model_name = "tinyml_ad",
     .labels = NULL,
     .inputs = {
@@ -235,7 +235,7 @@ const nrf_axon_nn_compiled_model_layer_s model_tinyml_ad_2_2 = {
 /*********************************************************************************
  * Auto-generated nrf Axon compiled neural network model header file.
  * Model Name: tinyml_ad
- * Axon Neural Network Compiler Version: 1.0.1
+ * Axon Neural Network Compiler Version: 1.1.0
  *********************************************************************************/
 #ifdef __cplusplus
 extern "C" {
@@ -257,7 +257,7 @@ const NRF_AXON_PLATFORM_BITWIDTH_UNSIGNED_TYPE cmd_buffer_tinyml_ad_3_3[35] = {
 };
 const nrf_axon_nn_compiled_model_layer_s model_tinyml_ad_3_3 = {
   .base = {
-    .compiler_version = 0x00010001,
+    .compiler_version = 0x00010100,
     .model_name = "tinyml_ad",
     .labels = NULL,
     .inputs = {
@@ -312,7 +312,7 @@ const nrf_axon_nn_compiled_model_layer_s model_tinyml_ad_3_3 = {
 /*********************************************************************************
  * Auto-generated nrf Axon compiled neural network model header file.
  * Model Name: tinyml_ad
- * Axon Neural Network Compiler Version: 1.0.1
+ * Axon Neural Network Compiler Version: 1.1.0
  *********************************************************************************/
 #ifdef __cplusplus
 extern "C" {
@@ -334,7 +334,7 @@ const NRF_AXON_PLATFORM_BITWIDTH_UNSIGNED_TYPE cmd_buffer_tinyml_ad_4_4[35] = {
 };
 const nrf_axon_nn_compiled_model_layer_s model_tinyml_ad_4_4 = {
   .base = {
-    .compiler_version = 0x00010001,
+    .compiler_version = 0x00010100,
     .model_name = "tinyml_ad",
     .labels = NULL,
     .inputs = {
@@ -389,7 +389,7 @@ const nrf_axon_nn_compiled_model_layer_s model_tinyml_ad_4_4 = {
 /*********************************************************************************
  * Auto-generated nrf Axon compiled neural network model header file.
  * Model Name: tinyml_ad
- * Axon Neural Network Compiler Version: 1.0.1
+ * Axon Neural Network Compiler Version: 1.1.0
  *********************************************************************************/
 #ifdef __cplusplus
 extern "C" {
@@ -411,7 +411,7 @@ const NRF_AXON_PLATFORM_BITWIDTH_UNSIGNED_TYPE cmd_buffer_tinyml_ad_5_5[35] = {
 };
 const nrf_axon_nn_compiled_model_layer_s model_tinyml_ad_5_5 = {
   .base = {
-    .compiler_version = 0x00010001,
+    .compiler_version = 0x00010100,
     .model_name = "tinyml_ad",
     .labels = NULL,
     .inputs = {
@@ -466,7 +466,7 @@ const nrf_axon_nn_compiled_model_layer_s model_tinyml_ad_5_5 = {
 /*********************************************************************************
  * Auto-generated nrf Axon compiled neural network model header file.
  * Model Name: tinyml_ad
- * Axon Neural Network Compiler Version: 1.0.1
+ * Axon Neural Network Compiler Version: 1.1.0
  *********************************************************************************/
 #ifdef __cplusplus
 extern "C" {
@@ -488,7 +488,7 @@ const NRF_AXON_PLATFORM_BITWIDTH_UNSIGNED_TYPE cmd_buffer_tinyml_ad_6_6[35] = {
 };
 const nrf_axon_nn_compiled_model_layer_s model_tinyml_ad_6_6 = {
   .base = {
-    .compiler_version = 0x00010001,
+    .compiler_version = 0x00010100,
     .model_name = "tinyml_ad",
     .labels = NULL,
     .inputs = {
@@ -543,7 +543,7 @@ const nrf_axon_nn_compiled_model_layer_s model_tinyml_ad_6_6 = {
 /*********************************************************************************
  * Auto-generated nrf Axon compiled neural network model header file.
  * Model Name: tinyml_ad
- * Axon Neural Network Compiler Version: 1.0.1
+ * Axon Neural Network Compiler Version: 1.1.0
  *********************************************************************************/
 #ifdef __cplusplus
 extern "C" {
@@ -565,7 +565,7 @@ const NRF_AXON_PLATFORM_BITWIDTH_UNSIGNED_TYPE cmd_buffer_tinyml_ad_7_7[35] = {
 };
 const nrf_axon_nn_compiled_model_layer_s model_tinyml_ad_7_7 = {
   .base = {
-    .compiler_version = 0x00010001,
+    .compiler_version = 0x00010100,
     .model_name = "tinyml_ad",
     .labels = NULL,
     .inputs = {
@@ -620,7 +620,7 @@ const nrf_axon_nn_compiled_model_layer_s model_tinyml_ad_7_7 = {
 /*********************************************************************************
  * Auto-generated nrf Axon compiled neural network model header file.
  * Model Name: tinyml_ad
- * Axon Neural Network Compiler Version: 1.0.1
+ * Axon Neural Network Compiler Version: 1.1.0
  *********************************************************************************/
 #ifdef __cplusplus
 extern "C" {
@@ -642,7 +642,7 @@ const NRF_AXON_PLATFORM_BITWIDTH_UNSIGNED_TYPE cmd_buffer_tinyml_ad_8_8[35] = {
 };
 const nrf_axon_nn_compiled_model_layer_s model_tinyml_ad_8_8 = {
   .base = {
-    .compiler_version = 0x00010001,
+    .compiler_version = 0x00010100,
     .model_name = "tinyml_ad",
     .labels = NULL,
     .inputs = {
@@ -697,7 +697,7 @@ const nrf_axon_nn_compiled_model_layer_s model_tinyml_ad_8_8 = {
 /*********************************************************************************
  * Auto-generated nrf Axon compiled neural network model header file.
  * Model Name: tinyml_ad
- * Axon Neural Network Compiler Version: 1.0.1
+ * Axon Neural Network Compiler Version: 1.1.0
  *********************************************************************************/
 #ifdef __cplusplus
 extern "C" {
@@ -722,7 +722,7 @@ const NRF_AXON_PLATFORM_BITWIDTH_UNSIGNED_TYPE cmd_buffer_tinyml_ad_9_9[46] = {
 };
 const nrf_axon_nn_compiled_model_layer_s model_tinyml_ad_9_9 = {
   .base = {
-    .compiler_version = 0x00010001,
+    .compiler_version = 0x00010100,
     .model_name = "tinyml_ad",
     .labels = NULL,
     .inputs = {
