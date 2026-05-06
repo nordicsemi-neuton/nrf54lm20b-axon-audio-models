@@ -14,7 +14,7 @@
 
 #define MODEL_WAKEWORD_LABEL        "Okay Nordic"
 #define KEYWORD_SPOTTING_TIMEOUT_MS 7000
-#define PRINT_RAW_PROBABILITY       0
+#define PRINT_RAW_PROBABILITY       1
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -77,7 +77,7 @@ typedef struct model_observability_s
 #define NUM_BINS 2
 
 static const float  PROBABILITY_THRESHOLD  = 0.3f;
-static const size_t NUM_INFERENCES_FOR_PSI = 5000;
+static const size_t NUM_INFERENCES_FOR_PSI = 50;
 
 static const float BASELINE_ENTROPY_DIST[] = { 0.908861453063231, 0.09113854693676901 };
 static const float ENTROPY_BIN_EDGES[]     = { 2.8630409869967563e-11, 0.1897623273968213, 0.7 };
@@ -166,6 +166,8 @@ int main()
             {
                 res = nrf_edgeai_feed_inputs(p_wakeword_model, audio_buffer, samples_num);
 
+                dmic_free_buffer(audio_buffer);
+
                 if (res != NRF_EDGEAI_ERR_SUCCESS) { break; }
 
                 res = nrf_edgeai_run_inference(p_wakeword_model);
@@ -186,7 +188,6 @@ int main()
                 break;
         }
 
-        dmic_free_buffer(audio_buffer);
     }
 
     return 0;
@@ -199,10 +200,13 @@ static float compute_psi(const float bin_entropy_current[],
                          size_t      num_bins)
 {
     float sum = 0.0f;
+    float epsilon = 1e-10f;  // Small constant to avoid log(0)
+
     for (size_t i = 0; i < num_bins; i++)
     {
-        sum += (bin_entropy_current[i] - bin_entropy_baseline[i]) *
-               logf(bin_entropy_current[i] / bin_entropy_baseline[i]);
+        float bin_entropy = bin_entropy_current[i]  + epsilon;
+        sum += (bin_entropy - bin_entropy_baseline[i]) *
+               logf(bin_entropy / bin_entropy_baseline[i]);
     }
 
     return sum;
@@ -235,7 +239,7 @@ static void print_model_observability(model_observability_t* m_obsv, const float
     static size_t print_count = 0;
     print_count++;
 
-    printk("model_obsv[%zu]: {\t", print_count);
+    printk("model_obsv[%zu]: {\n", print_count);
     printk("num_classes = %u,\n", m_obsv->meta.num_classes);
     printk("num_inferences_for_psi = %u,\n", m_obsv->meta.num_inferences_for_psi);
     printk("num_bins = %u,\n", m_obsv->meta.num_bins);
@@ -244,16 +248,16 @@ static void print_model_observability(model_observability_t* m_obsv, const float
     printk("entropy_bin_edges = [");
     for (size_t i = 0; i < m_obsv->meta.num_bins + 1; i++)
     {
-        printk("%f,\n", m_obsv->meta.entropy_bin_edges[i]);
+        printk("%f,", m_obsv->meta.entropy_bin_edges[i]);
     }
-    printk("], \n");
+    printk("],\n");
 
     printk("baseline_entropy = [");
     for (size_t i = 0; i < m_obsv->meta.num_bins; i++)
     {
-        printk("%f,\n", m_obsv->meta.baseline_entropy[i]);
+        printk("%f,", m_obsv->meta.baseline_entropy[i]);
     }
-    printk("], \n");
+    printk("],\n");
 
     printk("current_inference_count = %u,\n", m_obsv->ctx.inference_count);
 
@@ -281,14 +285,17 @@ static void process_prediction_probability(model_observability_t* m_obsv,
                                            const float            probability[],
                                            size_t                 num_classes)
 {
-
     if (probability[0] < m_obsv->meta.probability_threshold) { return; }
 
     m_obsv->ctx.inference_count++;
 
     float e = compute_entropy(probability, num_classes);
 
-    for (size_t i = 1; i < m_obsv->meta.num_bins; i++)
+#if PRINT_RAW_PROBABILITY
+    printk("p: %f, e: %f, current inference_count: %u\n", probability[0], e, m_obsv->ctx.inference_count);
+#endif
+
+    for (size_t i = 1; i <= m_obsv->meta.num_bins; i++)
     {
         if (e <= m_obsv->meta.entropy_bin_edges[i])
         {
