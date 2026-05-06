@@ -8,6 +8,7 @@
 #include "models/kws/nrf_edgeai_generated/nrf_edgeai_user_model.h"
 
 #include "dmic.h"
+#include "math.h"
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -48,61 +49,68 @@ typedef struct
     size_t      num_in_row;
 } keyword_detection_ctx_t;
 
+typedef struct model_observability_meta_s
+{
+    size_t       num_classes;
+    size_t       num_inferences_for_psi;
+    size_t       num_bins;
+    const float* entropy_bin_edges;
+    const float* baseline_entropy;
+    const float  probability_threshold;
+} model_observability_meta_t;
+
+typedef struct model_observability_ctx_s
+{
+    size_t* bin_entropy_counts;
+    float*  bin_entropy_dist;
+    size_t  inference_count;
+} model_observability_ctx_t;
+
+typedef struct model_observability_s
+{
+    const model_observability_meta_t meta;
+    model_observability_ctx_t        ctx;
+} model_observability_t;
+
 //////////////////////////////////////////////////////////////////////////////
 
-static bool is_wakeword_detected(flt32_t probability);
-static bool is_keyword_detected(uint16_t     predicted_class,
-                                flt32_t      probability,
-                                const char** pp_keyword_name,
-                                uint8_t*     p_average_probability);
+#define NUM_BINS 2
 
-//////////////////////////////////////////////////////////////////////////////
+static const float  PROBABILITY_THRESHOLD  = 0.3f;
+static const size_t NUM_INFERENCES_FOR_PSI = 5000;
 
-static const char* KEYWORDS_LABELS[] = { [KEYWORD_DOWN] = "Down",   [KEYWORD_GO] = "Go",
-                                         [KEYWORD_LEFT] = "Left",   [KEYWORD_NO] = "No",
-                                         [KEYWORD_OFF] = "Off",     [KEYWORD_ON] = "On",
-                                         [KEYWORD_RIGHT] = "Right", [KEYWORD_SILENCE] = "Silence",
-                                         [KEYWORD_STOP] = "Stop",   [KEYWORD_UNKNOWN] = "Unknown",
-                                         [KEYWORD_UP] = "Up",       [KEYWORD_YES] = "Yes" };
+static const float BASELINE_ENTROPY_DIST[] = { 0.908861453063231, 0.09113854693676901 };
+static const float ENTROPY_BIN_EDGES[]     = { 2.8630409869967563e-11, 0.1897623273968213, 0.7 };
 
-static const keyword_detection_ctx_t KEYWORDS_CTX[] = {
-    [KEYWORD_DOWN]    = { .name           = KEYWORDS_LABELS[KEYWORD_DOWN],
-                         .prob_threshold = 0.9f,
-                         .num_in_row     = 22 },
-    [KEYWORD_GO]      = { .name           = KEYWORDS_LABELS[KEYWORD_GO],
-                         .prob_threshold = 0.9f,
-                         .num_in_row     = 22 },
-    [KEYWORD_LEFT]    = { .name           = KEYWORDS_LABELS[KEYWORD_LEFT],
-                         .prob_threshold = 0.9f,
-                         .num_in_row     = 22 },
-    [KEYWORD_NO]      = { .name           = KEYWORDS_LABELS[KEYWORD_NO],
-                         .prob_threshold = 0.9f,
-                         .num_in_row     = 22 },
-    [KEYWORD_OFF]     = { .name           = KEYWORDS_LABELS[KEYWORD_OFF],
-                         .prob_threshold = 0.9f,
-                         .num_in_row     = 22 },
-    [KEYWORD_ON]      = { .name           = KEYWORDS_LABELS[KEYWORD_ON],
-                         .prob_threshold = 0.9f,
-                         .num_in_row     = 22 },
-    [KEYWORD_RIGHT]   = { .name           = KEYWORDS_LABELS[KEYWORD_RIGHT],
-                         .prob_threshold = 0.9f,
-                         .num_in_row     = 22 },
-    [KEYWORD_SILENCE] = { .name           = KEYWORDS_LABELS[KEYWORD_SILENCE],
-                         .prob_threshold = 0.9f,
-                         .num_in_row     = 22 },
-    [KEYWORD_STOP]    = { .name           = KEYWORDS_LABELS[KEYWORD_STOP],
-                         .prob_threshold = 0.9f,
-                         .num_in_row     = 22 },
-    [KEYWORD_UNKNOWN] = { .name           = KEYWORDS_LABELS[KEYWORD_UNKNOWN],
-                         .prob_threshold = 0.9f,
-                         .num_in_row     = 22 },
-    [KEYWORD_UP]      = { .name           = KEYWORDS_LABELS[KEYWORD_UP],
-                         .prob_threshold = 0.9f,
-                         .num_in_row     = 22 },
-    [KEYWORD_YES]     = { .name           = KEYWORDS_LABELS[KEYWORD_YES],
-                         .prob_threshold = 0.9f,
-                         .num_in_row     = 22 },
+static size_t CURRENT_ENTROPY_BIN_COUNTS[NUM_BINS] = { 0 };
+static float  CURRENT_ENTROPY_DIST[NUM_BINS]       = { 0.0f };
+
+static model_observability_t model_observability = {
+    .meta = {
+        .num_classes = 1,
+        .num_inferences_for_psi = NUM_INFERENCES_FOR_PSI,
+        .num_bins = NUM_BINS,
+        .entropy_bin_edges = ENTROPY_BIN_EDGES,
+        .baseline_entropy = BASELINE_ENTROPY_DIST,
+        .probability_threshold = PROBABILITY_THRESHOLD,
+    },
+    .ctx = {
+        .bin_entropy_counts = CURRENT_ENTROPY_BIN_COUNTS,
+        .bin_entropy_dist = CURRENT_ENTROPY_DIST,
+        .inference_count = 0,
+    },
 };
+
+//////////////////////////////////////////////////////////////////////////////
+
+static float compute_psi(const float bin_entropy_current[],
+                         const float bin_entropy_baseline[],
+                         size_t      num_bins);
+static float compute_entropy(const float probabilities[], size_t num_classes);
+static void print_model_observability(model_observability_t* m_obsv, const float psi);
+static void process_prediction_probability(model_observability_t* m_obsv,
+                                           const float            probability[],
+                                           size_t                 num_classes);
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -110,11 +118,6 @@ int main()
 {
     printk("Starting Wakeword gated KWS Application...\n");
     printk("\tWakeword: %s\n", MODEL_WAKEWORD_LABEL);
-    printk("\tSupported keywords: ");
-    for (size_t i = 0; i < KEYWORDS_cnt; i++)
-    {
-        printk("%s%s", KEYWORDS_LABELS[i], (i < KEYWORDS_cnt - 1) ? ", " : "\n");
-    }
 
     nrf_edgeai_rt_version_t libver = nrf_edgeai_runtime_version();
     printk("Nordic Edge AI Library version: %d.%d.%d\n",
@@ -123,18 +126,11 @@ int main()
            libver.field.patch);
 
     nrf_edgeai_t* p_wakeword_model = nrf_edgeai_user_model_wakeword();
-    nrf_edgeai_t* p_kws_model      = nrf_edgeai_user_model_kws();
 
     // Initialize wakeword model
     nrf_edgeai_err_t res = nrf_edgeai_init(p_wakeword_model);
     __ASSERT(res == NRF_EDGEAI_ERR_SUCCESS,
              "Failed to initialize Wakeword Edge AI model, error code: %d\n",
-             res);
-
-    // Initialize keyword spotting model
-    res = nrf_edgeai_init(p_kws_model);
-    __ASSERT(res == NRF_EDGEAI_ERR_SUCCESS,
-             "Failed to initialize KWS Edge AI model, error code: %d\n",
              res);
 
     // Initialize PDM microphone
@@ -148,7 +144,6 @@ int main()
     size_t audio_buffer_size;
 
     const int32_t read_timeout   = 100;
-    uint32_t      kws_start_time = 0;
 
     application_state_t app_state = APP_WAITING_FOR_WAKEWORD;
     printk("Waiting for wakeword...\n");
@@ -181,52 +176,11 @@ int main()
                 flt32_t  probability =
                     p_wakeword_model->decoded_output.classif.probabilities.p_f32[predicted_class];
 
-                if (is_wakeword_detected(probability))
-                {
-                    printk("Wakeword detected! Starting keyword spotting...\n");
-                    // Re-initialize KWS model to reset its state after wakeword detection
-                    nrf_edgeai_model_axon_init_persistent_vars(p_kws_model);
-                    kws_start_time = k_uptime_get_32();
-                    app_state      = APP_WAITING_FOR_KEYWORDS;
-                }
+                process_prediction_probability(&model_observability, &probability, 1);
             }
             break;
             case APP_WAITING_FOR_KEYWORDS:
-            {
-                if (k_uptime_get_32() - kws_start_time > KEYWORD_SPOTTING_TIMEOUT_MS)
-                {
-                    printk("Keyword spotting timeout\nWaiting for wakeword...\n");
-                    // Re-initialize WW model to reset its state after keyword detection
-                    nrf_edgeai_model_axon_init_persistent_vars(p_wakeword_model);
-                    app_state = APP_WAITING_FOR_WAKEWORD;
-                    break;
-                }
-
-                res = nrf_edgeai_feed_inputs(p_kws_model, audio_buffer, samples_num);
-
-                if (res != NRF_EDGEAI_ERR_SUCCESS) { break; }
-
-                res = nrf_edgeai_run_inference(p_kws_model);
-
-                if (res != NRF_EDGEAI_ERR_SUCCESS) { break; }
-
-                uint16_t predicted_class = p_kws_model->decoded_output.classif.predicted_class;
-                flt32_t  probability =
-                    p_kws_model->decoded_output.classif.probabilities.p_f32[predicted_class];
-
-                const char* keyword_name            = NULL;
-                uint8_t     average_probability_pct = 0;
-
-                if (is_keyword_detected(predicted_class,
-                                        probability,
-                                        &keyword_name,
-                                        &average_probability_pct))
-                {
-                    printk("Keyword detected: %s, %d %%\n", keyword_name, average_probability_pct);
-                    kws_start_time = k_uptime_get_32();  // reset timeout after keyword detection
-                }
-            }
-            break;
+                break;
 
             default:
                 break;
@@ -240,104 +194,129 @@ int main()
 
 //////////////////////////////////////////////////////////////////////////////
 
-static bool is_wakeword_detected(flt32_t probability)
+static float compute_psi(const float bin_entropy_current[],
+                         const float bin_entropy_baseline[],
+                         size_t      num_bins)
 {
-#define THRESHOLD  0.95f
-#define POS_IN_ROW 12
-#define ROW_LEN    33
-    static bool result_row[ROW_LEN];
-
-    bool is_detected = false;
-
-    /* move result by 1 position*/
-    for (int i = 0; i < ROW_LEN - 1; i++)
+    float sum = 0.0f;
+    for (size_t i = 0; i < num_bins; i++)
     {
-        result_row[i] = result_row[i + 1];
+        sum += (bin_entropy_current[i] - bin_entropy_baseline[i]) *
+               logf(bin_entropy_current[i] / bin_entropy_baseline[i]);
     }
 
-    result_row[ROW_LEN - 1] = probability > THRESHOLD ? true : false;
-
-    /* chuck mode */
-    static int counter = 0;
-    counter++;
-    if (counter == ROW_LEN)
-    {
-        /* count */
-        int pos_count = 0;
-        for (int i = 0; i < ROW_LEN; i++)
-        {
-            if (result_row[i] == true) { pos_count++; }
-        }
-        /* test */
-        if (pos_count >= POS_IN_ROW) { is_detected = true; }
-        /* reset counter */
-        counter = 0;
-    }
-
-#if PRINT_RAW_PROBABILITY
-    printk("Wakeword model count: %d \tprob : %0.3f\n", counter, probability);
-#endif
-
-    return is_detected;
+    return sum;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static bool is_keyword_detected(uint16_t     predicted_class,
-                                flt32_t      probability,
-                                const char** pp_keyword_name,
-                                uint8_t*     p_average_probability)
+static float compute_entropy(const float probabilities[], size_t num_classes)
 {
-    typedef struct
+    float entropy = 0.0f;
+    float epsilon = 1e-10f;  // Small constant to avoid log(0)
+
+    for (size_t i = 0; i < num_classes; i++)
     {
-        uint16_t predicted_class;
-        size_t   count;
-        flt32_t  average_probability;
-    } keyword_runtime_ctx_t;
+        float p = probabilities[i];
 
-    bool is_detected = false;
+        // Clip probabilities to avoid log(0) and log(>1)
+        p = p < epsilon ? epsilon : (p > 1.0f - epsilon) ? 1.0f - epsilon : p;
 
-    static const size_t num_keywords = sizeof(KEYWORDS_CTX) / sizeof(KEYWORDS_CTX[0]);
-
-    if (predicted_class >= num_keywords || (predicted_class == KEYWORD_UNKNOWN) ||
-        (predicted_class == KEYWORD_SILENCE))
-    {
-        *pp_keyword_name       = NULL;
-        *p_average_probability = 0;
-        return is_detected;
+        entropy += -(p * logf(p) + (1.0f - p) * logf(1.0f - p));
     }
 
-    static keyword_runtime_ctx_t   runtime_ctx   = { 0 };
-    const keyword_detection_ctx_t* p_keyword_ctx = &KEYWORDS_CTX[predicted_class];
+    return entropy;
+}
 
-    if (predicted_class != runtime_ctx.predicted_class)
+//////////////////////////////////////////////////////////////////////////////
+
+static void print_model_observability(model_observability_t* m_obsv, const float psi)
+{
+    static size_t print_count = 0;
+    print_count++;
+
+    printk("model_obsv[%zu]: {\t", print_count);
+    printk("num_classes = %u,\n", m_obsv->meta.num_classes);
+    printk("num_inferences_for_psi = %u,\n", m_obsv->meta.num_inferences_for_psi);
+    printk("num_bins = %u,\n", m_obsv->meta.num_bins);
+    printk("probability_threshold = %f,\n", m_obsv->meta.probability_threshold);
+
+    printk("entropy_bin_edges = [");
+    for (size_t i = 0; i < m_obsv->meta.num_bins + 1; i++)
     {
-        // Reset runtime context if predicted class changes
-        runtime_ctx.predicted_class     = predicted_class;
-        runtime_ctx.count               = 0;
-        runtime_ctx.average_probability = 0;
+        printk("%f,\n", m_obsv->meta.entropy_bin_edges[i]);
+    }
+    printk("], \n");
+
+    printk("baseline_entropy = [");
+    for (size_t i = 0; i < m_obsv->meta.num_bins; i++)
+    {
+        printk("%f,\n", m_obsv->meta.baseline_entropy[i]);
+    }
+    printk("], \n");
+
+    printk("current_inference_count = %u,\n", m_obsv->ctx.inference_count);
+
+    printk("current_bin_entropy_counts = [");
+    for (size_t i = 0; i < m_obsv->meta.num_bins; i++)
+    {
+        printk("%u,", m_obsv->ctx.bin_entropy_counts[i]);
+    }
+    printk("], \n");
+
+    printk("current_bin_entropy_dist = [");
+    for (size_t i = 0; i < m_obsv->meta.num_bins; i++)
+    {
+        printk("%f,", m_obsv->ctx.bin_entropy_dist[i]);
+    }
+    printk("], \n");
+
+    printk("psi_entropy = %f\n", psi);
+    printk("}\n");
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+static void process_prediction_probability(model_observability_t* m_obsv,
+                                           const float            probability[],
+                                           size_t                 num_classes)
+{
+
+    if (probability[0] < m_obsv->meta.probability_threshold) { return; }
+
+    m_obsv->ctx.inference_count++;
+
+    float e = compute_entropy(probability, num_classes);
+
+    for (size_t i = 1; i < m_obsv->meta.num_bins; i++)
+    {
+        if (e <= m_obsv->meta.entropy_bin_edges[i])
+        {
+            m_obsv->ctx.bin_entropy_counts[i - 1]++;
+            break;
+        }
     }
 
-    runtime_ctx.count++;
-    runtime_ctx.average_probability +=
-        (probability - runtime_ctx.average_probability) / runtime_ctx.count;
-
-#if PRINT_RAW_PROBABILITY
-    printk("Keyword model class %d, count: %d \tprob : %0.3f\n",
-           runtime_ctx.predicted_class,
-           runtime_ctx.count,
-           runtime_ctx.average_probability);
-#endif
-
-    if ((runtime_ctx.count >= p_keyword_ctx->num_in_row) &&
-        (runtime_ctx.average_probability >= p_keyword_ctx->prob_threshold))
+    if (m_obsv->ctx.inference_count >= m_obsv->meta.num_inferences_for_psi)
     {
-        *pp_keyword_name       = p_keyword_ctx->name;
-        *p_average_probability = (uint8_t)(runtime_ctx.average_probability * 100);
-        // Reset runtime context after keyword is detected
-        memset(&runtime_ctx, 0, sizeof(runtime_ctx));
-        is_detected = true;
-    }
+        for (size_t i = 0; i < m_obsv->meta.num_bins; i++)
+        {
+            m_obsv->ctx.bin_entropy_dist[i] =
+                (float)m_obsv->ctx.bin_entropy_counts[i] / (float)m_obsv->ctx.inference_count;
+        }
 
-    return is_detected;
+        float psi = compute_psi(m_obsv->ctx.bin_entropy_dist,
+                                m_obsv->meta.baseline_entropy,
+                                m_obsv->meta.num_bins);
+
+        print_model_observability(m_obsv, psi);
+
+        // Reset counts and distribution for the next round of PSI calculation
+        for (size_t i = 0; i < m_obsv->meta.num_bins; i++)
+        {
+            m_obsv->ctx.bin_entropy_counts[i] = 0;
+            m_obsv->ctx.bin_entropy_dist[i]   = 0.0f;
+        }
+        m_obsv->ctx.inference_count = 0;
+    }
 }
