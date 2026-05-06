@@ -24,3 +24,5 @@ venv/
 /bin/
 obj/
 build/
+
+*zip

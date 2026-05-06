@@ -29,14 +29,16 @@ typedef enum application_state_e
 
 typedef enum keyword_labels_e
 {
-    KEYWORD_BACK    = 0,
-    KEYWORD_LOUD    = 1,
-    KEYWORD_NEXT    = 2,
-    KEYWORD_OTHER     = 3,
-    KEYWORD_PLAY    = 4,
-    KEYWORD_QUITE     = 5,
-    KEYWORD_SILENCE = 6,
-    KEYWORD_STOP    = 7,
+    KEYWORD_APPLY    = 0,
+    KEYWORD_BACK    = 1,
+    KEYWORD_CLOSE    = 2,
+    KEYWORD_NEXT     = 3,
+    KEYWORD_OKAY     = 4,
+    KEYWORD_OPEN = 5,
+    KEYWORD_OTHER    = 6,
+    KEYWORD_REJECT    = 7,
+    KEYWORD_SILENCE = 8,
+    KEYWORD_YES    = 9,
 
     KEYWORDS_cnt
 } keyword_labels_t;
@@ -88,14 +90,16 @@ static bool try_detect_keyword_command(uint16_t     predicted_class,
 //////////////////////////////////////////////////////////////////////////////
 
 static const keyword_class_cfg_t KEYWORD_CLASSES_CFG[] = {    
+    [KEYWORD_APPLY] = { .name = "APPLY", .count_needed = 2, .threshold_percent = 70 },
     [KEYWORD_BACK] = { .name = "BACK", .count_needed = 2, .threshold_percent = 0 },
-    [KEYWORD_LOUD] = { .name = "LOUD", .count_needed = 2, .threshold_percent = 0 },
+    [KEYWORD_CLOSE] = { .name = "CLOSE", .count_needed = 2, .threshold_percent = 0 },
     [KEYWORD_NEXT] = { .name = "NEXT", .count_needed = 2, .threshold_percent = 0 },
-    [KEYWORD_OTHER] = { .name = "OTHER", .count_needed = 4, .threshold_percent = 0 },
-    [KEYWORD_PLAY] = { .name = "PLAY", .count_needed = 3, .threshold_percent = 0 },
-    [KEYWORD_QUITE] = { .name = "QUITE", .count_needed = 2, .threshold_percent = 00 },
+    [KEYWORD_OKAY] = { .name = "OKAY", .count_needed = 2, .threshold_percent = 0 },
+    [KEYWORD_OPEN] = { .name = "OPEN", .count_needed = 1, .threshold_percent = 70 },
+    [KEYWORD_OTHER] = { .name = "OTHER", .count_needed = 4, .threshold_percent = 0 },    
+    [KEYWORD_REJECT] = { .name = "REJECT", .count_needed = 2, .threshold_percent = 0 },
     [KEYWORD_SILENCE] = { .name = "SILENCE", .count_needed = 4, .threshold_percent = 0 },
-    [KEYWORD_STOP] = { .name = "STOP", .count_needed = 2, .threshold_percent = 0 },
+    [KEYWORD_YES] = { .name = "YES", .count_needed = 2, .threshold_percent = 70 },
 };
 
 static keyword_runtime_ctx_t s_keyword_runtime_ctx;
@@ -280,9 +284,10 @@ static bool is_keyword_command_component(uint16_t predicted_class)
 
 static bool is_keyword_phrase_first_word(uint16_t predicted_class)
 {
-    return (predicted_class == KEYWORD_QUITE) || (predicted_class == KEYWORD_NEXT) ||
-           (predicted_class == KEYWORD_PLAY) || (predicted_class == KEYWORD_BACK) ||
-              (predicted_class == KEYWORD_STOP) || (predicted_class == KEYWORD_LOUD);
+    return (predicted_class == KEYWORD_APPLY) || (predicted_class == KEYWORD_NEXT) ||
+           (predicted_class == KEYWORD_CLOSE) || (predicted_class == KEYWORD_BACK) ||
+           (predicted_class == KEYWORD_OPEN) || (predicted_class == KEYWORD_YES) ||
+           (predicted_class == KEYWORD_OKAY) || (predicted_class == KEYWORD_REJECT);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -487,12 +492,13 @@ static bool try_detect_keyword_command(uint16_t     predicted_class,
 
 
 
-
-// 0	BACK
-// 1	LOUD
-// 2	NEXT
-// 3	OTHER
-// 4	PLAY
-// 5	QUITE
-// 6	SILENCE
-// 7	STOP
+// 0	APPLY
+// 1	BACK
+// 2	CLOSE
+// 3	NEXT
+// 4	OKAY
+// 5	OPEN
+// 6	OTHER
+// 7	REJECT
+// 8	SILENCE
+// 9	YES

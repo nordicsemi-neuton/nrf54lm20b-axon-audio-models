@@ -30,13 +30,16 @@ typedef enum application_state_e
 typedef enum keyword_labels_e
 {
     KEYWORD_BACK    = 0,
-    KEYWORD_LOUD    = 1,
-    KEYWORD_NEXT    = 2,
-    KEYWORD_OTHER     = 3,
-    KEYWORD_PLAY    = 4,
-    KEYWORD_QUITE     = 5,
-    KEYWORD_SILENCE = 6,
-    KEYWORD_STOP    = 7,
+    KEYWORD_HOME    = 1,
+    KEYWORD_LOUD    = 2,
+    KEYWORD_NEXT    = 3,
+    KEYWORD_OPEN    = 4,
+    KEYWORD_OTHER   = 5,
+    KEYWORD_PLAY    = 6,
+    KEYWORD_QUITE   = 7,
+    KEYWORD_SHOW    = 8,
+    KEYWORD_SILENCE = 9,
+    KEYWORD_STOP    = 10,
 
     KEYWORDS_cnt
 } keyword_labels_t;
@@ -88,12 +91,15 @@ static bool try_detect_keyword_command(uint16_t     predicted_class,
 //////////////////////////////////////////////////////////////////////////////
 
 static const keyword_class_cfg_t KEYWORD_CLASSES_CFG[] = {    
-    [KEYWORD_BACK] = { .name = "BACK", .count_needed = 2, .threshold_percent = 0 },
+    [KEYWORD_BACK] = { .name = "BACK", .count_needed = 2, .threshold_percent = 60 },
+    [KEYWORD_HOME] = { .name = "HOME", .count_needed = 2, .threshold_percent = 70 },
     [KEYWORD_LOUD] = { .name = "LOUD", .count_needed = 2, .threshold_percent = 0 },
-    [KEYWORD_NEXT] = { .name = "NEXT", .count_needed = 2, .threshold_percent = 0 },
+    [KEYWORD_NEXT] = { .name = "NEXT", .count_needed = 2, .threshold_percent = 40 },
+    [KEYWORD_OPEN] = { .name = "OPEN", .count_needed = 2, .threshold_percent = 0 },
     [KEYWORD_OTHER] = { .name = "OTHER", .count_needed = 4, .threshold_percent = 0 },
-    [KEYWORD_PLAY] = { .name = "PLAY", .count_needed = 3, .threshold_percent = 0 },
-    [KEYWORD_QUITE] = { .name = "QUITE", .count_needed = 2, .threshold_percent = 00 },
+    [KEYWORD_PLAY] = { .name = "PLAY", .count_needed = 2, .threshold_percent = 60 },
+    [KEYWORD_QUITE] = { .name = "QUITE", .count_needed = 2, .threshold_percent = 60 },
+    [KEYWORD_SHOW] = { .name = "SHOW", .count_needed = 2, .threshold_percent = 0 },
     [KEYWORD_SILENCE] = { .name = "SILENCE", .count_needed = 4, .threshold_percent = 0 },
     [KEYWORD_STOP] = { .name = "STOP", .count_needed = 2, .threshold_percent = 0 },
 };
@@ -280,9 +286,11 @@ static bool is_keyword_command_component(uint16_t predicted_class)
 
 static bool is_keyword_phrase_first_word(uint16_t predicted_class)
 {
-    return (predicted_class == KEYWORD_QUITE) || (predicted_class == KEYWORD_NEXT) ||
-           (predicted_class == KEYWORD_PLAY) || (predicted_class == KEYWORD_BACK) ||
-              (predicted_class == KEYWORD_STOP) || (predicted_class == KEYWORD_LOUD);
+    return (predicted_class == KEYWORD_HOME) || (predicted_class == KEYWORD_NEXT) ||
+           (predicted_class == KEYWORD_LOUD) || (predicted_class == KEYWORD_BACK) ||
+           (predicted_class == KEYWORD_OPEN) || (predicted_class == KEYWORD_PLAY) ||
+           (predicted_class == KEYWORD_QUITE) || (predicted_class == KEYWORD_SHOW) ||
+           (predicted_class == KEYWORD_STOP);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -487,12 +495,14 @@ static bool try_detect_keyword_command(uint16_t     predicted_class,
 
 
 
-
 // 0	BACK
-// 1	LOUD
-// 2	NEXT
-// 3	OTHER
-// 4	PLAY
-// 5	QUITE
-// 6	SILENCE
-// 7	STOP
+// 1	HOME
+// 2	LOUD
+// 3	NEXT
+// 4	OPEN
+// 5	OTHER
+// 6	PLAY
+// 7	QUITE
+// 8	SHOW
+// 9	SILENCE
+// 10	STOP
