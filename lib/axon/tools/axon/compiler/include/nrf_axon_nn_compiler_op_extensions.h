@@ -55,7 +55,8 @@ typedef void (*nrf_axon_nn_operator_mem_usage_func)(
   unsigned *output_ptr_offset,                  /**< populated with the offset from the output where the real data resides. Typically 0, but concat on the width axis can cause leading 0s to be inserted in front of each row. */
   unsigned *output_stride,                      /**< populated with output stride in bytes. Typically is the output width rounded up to the next multiple of 4. */
   unsigned *scratch_mem_needed_size,            /**< populated with size in bytes of any additional memory required by the layer computation. */
-  bool *output_can_overwrite_input              /**< populated with true if the input_ptr and output_ptr can be the same. */
+  bool *output_can_overwrite_input,             /**< populated with true if the input_ptr and output_ptr can be the same. */
+  unsigned *min_required_driver_version         /**< populated with the axon version the op was introduced. If features are added later and those features are used, must reflect the version the features were added */
 );
 
 /**

@@ -314,3 +314,65 @@ nrf_axon_result_e nrf_axon_nn_op_extension_reshape(uint16_t argc, NRF_AXON_PLATF
   }
   return NRF_AXON_RESULT_SUCCESS;
 }
+
+static inline int32_t get_nearest_neighbor(const int input_value,
+                                  const int32_t input_size,
+                                  const int32_t output_size,
+                                  const bool align_corners,
+                                  const bool half_pixel_centers) {
+  #define MY_MIN(a,b) (a>b ? b : a)
+  #define MY_MAX(a,b) (a>b ? a : b)
+  const float scale =
+      (align_corners && output_size > 1)
+          ? (input_size - 1) / (float)(output_size - 1)
+          : input_size / (float)(output_size);
+  const float offset = half_pixel_centers ? 0.5f : 0.0f;
+  int32_t output_value = MY_MIN(
+      align_corners
+          ? (int32_t)(roundf((input_value + offset) * scale))
+          : (int32_t)((input_value + offset) * scale),
+      input_size - 1);
+  if (half_pixel_centers) {
+    output_value = MY_MAX(0, output_value);
+  }
+  return output_value;
+}
+
+
+nrf_axon_result_e nrf_axon_nn_op_extension_resize_nearest_neighbor(uint16_t argc, NRF_AXON_PLATFORM_BITWIDTH_UNSIGNED_TYPE* args)
+{
+  if (((argc * sizeof(NRF_AXON_PLATFORM_BITWIDTH_UNSIGNED_TYPE)) < sizeof(nrf_axon_nn_op_extension_base2_args_s)) || (args==NULL)) {
+    return NRF_AXON_RESULT_FAILURE;
+  }
+  nrf_axon_nn_op_extension_resize_nearest_neighbor_args_s *resize_nearest_neighbor_args = (nrf_axon_nn_op_extension_resize_nearest_neighbor_args_s*)args;
+
+  int input_stride =  resize_nearest_neighbor_args->remaining_args.input_stride;
+  int output_stride = resize_nearest_neighbor_args->remaining_args.output_width;
+  int input_z_stride = input_stride * resize_nearest_neighbor_args->remaining_args.input_height;
+  int output_z_stride = output_stride * resize_nearest_neighbor_args->remaining_args.output_height;
+        
+  // iterate across the output surface.
+  for (uint16_t row_ndx=0; row_ndx < resize_nearest_neighbor_args->remaining_args.output_height; row_ndx++) { // height
+      int32_t in_row_ndx = get_nearest_neighbor(row_ndx, resize_nearest_neighbor_args->remaining_args.input_height, 
+                                        resize_nearest_neighbor_args->remaining_args.output_height,
+                                        resize_nearest_neighbor_args->remaining_args.align_corners, //align_corners,
+                                        resize_nearest_neighbor_args->remaining_args.half_pixel_centers); //half_pixel_centers
+    
+    for (uint16_t col_ndx=0;col_ndx < resize_nearest_neighbor_args->remaining_args.output_width; col_ndx++) { //width
+      int32_t in_col_ndx = get_nearest_neighbor(col_ndx, resize_nearest_neighbor_args->remaining_args.input_width, 
+                                        resize_nearest_neighbor_args->remaining_args.output_width,
+                                        resize_nearest_neighbor_args->remaining_args.align_corners, //align_corners,
+                                        resize_nearest_neighbor_args->remaining_args.half_pixel_centers); //half_pixel_centers
+      // now propagate the input to the output across all channels.
+      int32_t input_offset = in_row_ndx * resize_nearest_neighbor_args->remaining_args.input_stride + in_col_ndx;
+      int32_t output_offset = row_ndx * output_stride + col_ndx;
+      for (uint16_t chan_ndx = 0; chan_ndx < resize_nearest_neighbor_args->remaining_args.output_channel_cnt; chan_ndx++) { //channel
+        resize_nearest_neighbor_args->ptr_args.output[output_offset] = resize_nearest_neighbor_args->ptr_args.input[input_offset];
+        input_offset += input_z_stride;
+        output_offset += output_z_stride;
+      }
+      
+    }
+  }
+  return NRF_AXON_RESULT_SUCCESS;
+}

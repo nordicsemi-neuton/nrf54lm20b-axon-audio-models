@@ -16,44 +16,7 @@ extern "C" {
  * Size of the version field in the intermediate respresentation .bin file
  */
 #define NRF_AXON_INTERMEDIATE_REPRESENTATION_VERSION_SIZE (4)
-#define NRF_AXON_INTERMEDIATE_REPRESENTATION_VERSION (0x00001100) //4 byte version of MAJOR.MINOR.PATCH format
-
-/**
- * version 
- * 1.1.0 03/19/2026:
- * - TFLite 2.19 is supported version (was 2.15)
- * - More fixes to per-channel quantized dense layers:
- *     maximum input length increased to 2048 from 2046.
- *     maximum output length increased to 1024 from 512.
- *     signmoid and tanh actviation functions after per-channel quantized, fully-connected fixed.
- * 1.0.1 03/04/2026:
- * - softmax after fully-connected with per channel quantization fixed.
- * 1.0.0  03/02/2026:
- * - softmax fixed to report packed output.
- * - reshape implemented as a CPU op.
- * 0.2.0  02/17/2026:
- * - Compiler catches unsupported dilation settings.
- * - Renamed broadcast add op function.
- * 0.1.4  02/03/2026:
- * - Constant inputs for add and multiply operations.
- * - Axis broadcast for add operation.
- * - Width axis broadcast disabled (temporarily) for multiply operation.
- * - Maximum input channels increased from 512 to 1023 for many operations.
- * - Passlist functionality added.
- * - Optimization for 1D convolutions whose channel count is <= 16.
- * 0.1.2  12/18/2025 : 
- * - Fix to SplitV for bug experienced on Linux (not Windows).
- * - Average pool operations that are "mean-like" in that have an output width of 1 on height and/or width axis but whose
- *   filter size on that axis is less than the input size are now implemented with mean operation, allowing a maximum axis
- *   size of 1024 (vs 32). For example, input 49x20x64, filter 48x20x64, output 1x1x64, can now be handled.
- * - (INTERNAL) 1x1 pointwise output optimized with matrix mult instead of conv. Allows output channels up to 512 insteand of just 16.
- * - (INTERNAL) Places packing conv output in scratch mem.
- * 0.1.1  Internal development 
- * 0.1.0  12/11/2025 : 
- * - 1st versioned release
- */
-#define NRF_AXON_NN_COMPILER_VERSION (0x00010100) //4 byte version of MAJOR.MINOR.PATCH format. bits 23:16 => major, bits 15:8 => minor, bits 8:0 => patch 
-
+#define NRF_AXON_INTERMEDIATE_REPRESENTATION_VERSION (0x00010200) //4 byte version of MAJOR.MINOR.PATCH format
 
 /**
  * helper macro for determining the stride between rows (ie, number of bytes between the start of each row).

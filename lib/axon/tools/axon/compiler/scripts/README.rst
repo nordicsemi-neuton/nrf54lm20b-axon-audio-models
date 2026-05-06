@@ -136,13 +136,13 @@ These parameters affect the basic behavior of the compiler. Most are mandatory. 
        Mandatory (along with TRAIN_DATA) if TFLITE_MODEL is not provided.
    * - TRAIN_DATA
      - STR 
-     - The path and name of the train dataset file in floating point. Must be a numpy file and in the format supported by the respective model. Used only to convert a floating-point model into a tflite model when a TFLITE_MODEL is not provided.
+     - The path and name of the train dataset file. Must be a numpy file and in the format supported by the floating point model. Used only to convert a floating-point model into a tflite model when a TFLITE_MODEL is not provided.
 
        Mandatory if TFLITE_MODEL is not provided.
 
    * - TEST_DATA
      - STR
-     - The path and name of the test dataset file in float (Directory + file name). Must be a numpy file and in the format supported by the model. 
+     - The path and name of the test dataset file (Directory + file name). Must be a numpy file and in the format supported by the model. If a floating point model is provided, the test data must be in the format the floating point model expects.
      
        Optional, needed if the user wants accuracy results and test vectors header file in the output.
 
@@ -301,7 +301,17 @@ Advanced Parameters
 
        NOTE : This only solves the mismatch in the shape of the test data and model input. Any other transformation on the test data before feeding into the model apart from a simple reshape will lead to unexpected results. The user needs to be aware of such transformation if present beforehand.
        e.g, if the model expects an input image with shape 1x96x96x3 and the test data is simply flattened to be 1x27648, the reshape_input flag will enable reshaping the test data to match the shape of the model input.
-   
+   * - PERFORM_BIT_COMPARISON
+     - BOOL
+     - Used to disable the calculation and printing the histogram of differences.
+
+       default : ``True``
+   * - GET_HISTOGRAM_PLOT
+     - BOOL
+     - Used to display the histogram of differences on a python gui.
+
+       default : ``False``       
+
 Running the Executor
 *********************
 The compiler is run by launching the python executor from the command line.

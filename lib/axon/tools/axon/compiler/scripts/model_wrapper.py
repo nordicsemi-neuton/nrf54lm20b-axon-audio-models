@@ -229,8 +229,8 @@ class CompilerResultsReturnClass():
 
 
 class ModelDescriptionBin:
-    MAJOR_VER = 0
-    MINOR_VER = 17
+    MAJOR_VER = 1
+    MINOR_VER = 2
     PATCH_VER = 0
     binary_title_string = "AXON_INTERMEDIATE_REPRESENTATION_FILE"
     MODEL_BIN_VER = (MAJOR_VER << 16) + (MINOR_VER << 8) + PATCH_VER

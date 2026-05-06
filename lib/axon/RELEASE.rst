@@ -8,6 +8,32 @@ Axon NPU Release Notes
    :local:
    :depth: 2
 
+Release 1.2.0  08 Apr 2026
+******************************
+
+* Compiler release 1.2.0
+* Manifest (west.yml) pulls v3.3.0-preview2 tag of sdk-nrf (SHA-1 ede152ec21).
+* Tested and built with SDK toolchain version v3.2.0. Users are recommended to use this version as well.
+
+New features
+------------
+* Support for multiple outputs in a model.
+* Support CPU operator RESIZE_NEAREST_NEIGHBOR.
+* Compiled model header files will static_assert if the interlayer buffer is not allocated enough space to accommodate the model.
+* Compatibility check: models will report a minimum supported axon version to prevent models compiled with new features from being run on an older version of the driver that does not support these features.
+* Option to print histogram of bit differences between Axon inference and TFLite inference.
+
+Bug fixes
+------------
+* Quantization multiplier misapplied under some circumstances when on input to Add operation is packed and the other is unpacked. Models must be recompiled to receive this fix.
+
+Compatibility
+-------------
+* Older model versions are compatible with the latest driver. (Recommended that models using Add operator be recompiled due to bug mentioned above).
+* New model versions are compatible with older driver versions if they do not include multiple outputs or RESIZE_NEAREST_NEIGHBOR operation.
+  * Older driver versions will ignore all but the 1st output if a model has multiple outputs.
+  * Older driver versions will not compile models with the RESIZE_NEAREST_NEIGHBOR operation.
+
 Release 1.1.0  19 Mar 2026
 ******************************
 

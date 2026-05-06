@@ -18,6 +18,7 @@ import subprocess
 import numpy as np
 import tensorflow as tf
 import tflite as tflite
+import matplotlib.pyplot as plt
 
 from importlib import import_module
 from pathlib import Path
@@ -1781,3 +1782,103 @@ def check_input_shape_for_inference(data, expected_shape):
                 f"from {actual_shape.tolist()} to {expected_shape.tolist()}"
             )
     return data
+
+def plot_histogram_0_255(hist):
+    x = np.arange(256)  # 0–255 index space
+
+    plt.figure()
+    plt.bar(x, hist)
+    plt.title("Value Difference Histogram (0–255 index space)")
+    plt.xlabel("Index (diff)")
+    plt.ylabel("Count")
+    plt.show()
+
+def compute_value_diff_histogram(tflite_tensor, hw_tensor):
+
+    a = tflite_tensor.flatten().astype(np.int16)
+    b = hw_tensor.flatten().astype(np.int16)
+
+    diff = abs(a - b)
+    diff = np.clip(diff, 0, 255)
+
+    hist = np.bincount(diff, minlength=256)
+
+    return hist, diff
+
+def get_histogram_text_on_console(hist, diff_threshold=2, ratio_threshold=0.01, width=100, n=""):
+    total = np.sum(hist)
+    diff_values = np.arange(0, 256)
+    nonzero = np.where(hist > 0)[0]
+    histogram_text = print_with_borders(f"\tBit Comparison Histogram {n} ({total} data points)", border="", get_text=True)
+    max_count = np.max(hist)
+    #get histogram for zero index
+    ratio = hist[0] / total
+    bar_len = int((hist[0] / max_count) * width)
+    # bar =  "█" * bar_len
+    bar =  "|" * bar_len
+    d = diff_values[0]
+    histogram_text += f"\n\t\tDiff\t||graph|| (count, percent of full data points)"
+    histogram_text += f"\n\t\t{d:4d}\t|{bar} ({hist[0]}, {ratio:.2%})"
+
+    if len(nonzero) == 1 and diff_values[nonzero[0]] == 0:
+        histogram_text += "\n\tNo differences found. All values match perfectly.\n"
+        return histogram_text
+
+    for idx in nonzero:
+        d = diff_values[idx]
+        count = hist[idx]
+        ratio = count / total
+
+        if abs(d) <= diff_threshold:
+            continue
+        if ratio < ratio_threshold:
+            continue
+
+        bar_len = int((count / max_count) * width)
+        bar = "|" * bar_len
+        # bar = "H" * bar_len
+
+        histogram_text += f"\n\t\t{d:4d}\t|{bar} ({count}, {ratio:.2%})"
+    
+    return histogram_text
+
+def evaluate_bit_comparison_pass_fail(diff, tolerance=1, pass_ratio=0.99):
+    """
+    tolerance: allowed absolute difference (e.g., ±1)
+    pass_ratio: % of values that must satisfy tolerance
+    """
+
+    total = len(diff)
+    within_tol = np.sum(np.abs(diff) <= tolerance)
+
+    ratio = within_tol / total
+
+    hdr = print_with_borders("PASS/FAIL METRICS", border="-", get_text=True)
+    results_text = f"\nTolerance       : +/- {tolerance}"
+    results_text += f"\nWithin tolerance: {within_tol}/{total} ({ratio:.2%})"
+    results_text += f"\nRequired ratio  : {pass_ratio:.2%}"
+
+    if ratio >= pass_ratio:
+        results_text += "\nRESULT: PASS"        
+        print(hdr+results_text)
+        return True
+    else:
+        results_text += "\nRESULT: FAIL"
+        print(hdr+results_text)
+        return False
+    
+def save_histogram(hist, filename="value_diff_histogram.txt"):
+    with open(filename, "w") as f:
+        for i, count in enumerate(hist):
+            # if count > 0:
+            f.write(f"{i},{count}\n")
+
+def print_with_borders(text, border="=", get_text=False):
+    text = f"{border}{border} {text} {border}{border}"
+    border_text = border*len(text)
+    if get_text:
+        ret_text = f"{border_text}\n{text}\n{border_text}"
+        return ret_text
+    print(f"{border_text}")
+    print(text)
+    print(f"{border_text}")

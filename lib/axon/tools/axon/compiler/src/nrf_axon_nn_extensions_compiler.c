@@ -25,10 +25,13 @@ static void softmax_mem_usage(
   unsigned *output_ptr_offset,
   unsigned *output_stride,
   unsigned *scratch_mem_needed_size,
-  bool *output_can_overwrite_input
+  bool *output_can_overwrite_input,
+  unsigned *min_required_driver_version
 )
 {
   *scratch_mem_needed_size = 0;
+  *min_required_driver_version = NRF_AXON_GENERATE_VERSION(1,2,0);
+
   *output_ptr_offset = 0; /* output will be on 32bit boundary*/
   // softmax output is packed.
   *output_stride = (uint16_t)NRF_AXON_NN_STRIDE_WIDTH_IN_BYTES(layer->output_dimensions.width, layer->output_dimensions.byte_width, 1);
@@ -89,7 +92,8 @@ static void sigmoid_mem_usage(
   unsigned *output_ptr_offset,
   unsigned *output_stride,
   unsigned *scratch_mem_needed_size,
-  bool *output_can_overwrite_input
+  bool *output_can_overwrite_input,
+  unsigned *min_required_driver_version
 )
 {
   *output_ptr_offset = 0; /* output will be on 32bit boundary*/
@@ -97,6 +101,8 @@ static void sigmoid_mem_usage(
   *output_stride = (uint16_t)NRF_AXON_NN_STRIDE_WIDTH_IN_BYTES(layer->output_dimensions.width, layer->output_dimensions.byte_width, 1);
   // no temp memory needed
   *scratch_mem_needed_size = 0;
+  *min_required_driver_version = NRF_AXON_GENERATE_VERSION(1,2,0);
+
   /**
    * 1:1 correlation between inputs. 
    * safe to overwrite input if input is unpacked and input size <= output size.
@@ -149,7 +155,8 @@ static void tanh_mem_usage(
   unsigned *output_ptr_offset,
   unsigned *output_stride,
   unsigned *scratch_mem_needed_size,
-  bool *output_can_overwrite_input
+  bool *output_can_overwrite_input,
+  unsigned *min_required_driver_version
 )
 {
   *output_ptr_offset = 0; /* output will be on 32bit boundary*/
@@ -163,7 +170,8 @@ static void tanh_mem_usage(
   *output_can_overwrite_input = (layer->input_ids[0] >= 0) && // negative input id is externally generated and packed. All internal input is unpacked.
         (layer->input_dimensions[0].byte_width<=layer->output_dimensions.byte_width);
   
-  *scratch_mem_needed_size = 0; 
+  *scratch_mem_needed_size = 0;
+  *min_required_driver_version = NRF_AXON_GENERATE_VERSION(1,2,0);
 }
 
 static nrf_axon_compiler_result_e tanh_layer_compile(
@@ -210,19 +218,20 @@ static nrf_axon_compiler_result_e tanh_layer_compile(
 /**
  * reshape compiler functions
  */
-
 static void reshape_mem_usage(
   const nrf_axon_nn_model_layer_desc_s *layer,
   unsigned *output_ptr_offset,
   unsigned *output_stride,
   unsigned *scratch_mem_needed_size,
-  bool *output_can_overwrite_input
+  bool *output_can_overwrite_input,
+  unsigned *min_required_driver_version
 )
 {
   *output_ptr_offset = 0; /* output will be on 32bit boundary*/
   *output_stride = layer->output_dimensions.width * layer->output_dimensions.byte_width; // output will be packed
   *output_can_overwrite_input = false;  
-  *scratch_mem_needed_size = 0; 
+  *scratch_mem_needed_size = 0;
+  *min_required_driver_version = NRF_AXON_GENERATE_VERSION(1,2,0);
 }
 
 static nrf_axon_compiler_result_e reshape_layer_compile(
@@ -268,7 +277,70 @@ static nrf_axon_compiler_result_e reshape_layer_compile(
  * end reshape compiler functions
  */
 
-/*
+/**
+ * resize_nearest_neighbor compiler functions
+ */
+static void resize_nearest_neighbor_mem_usage(
+  const nrf_axon_nn_model_layer_desc_s *layer,
+  unsigned *output_ptr_offset,
+  unsigned *output_stride,
+  unsigned *scratch_mem_needed_size,
+  bool *output_can_overwrite_input,
+  unsigned *min_required_driver_version
+)
+{
+  *output_ptr_offset = 0; /* output will be on 32bit boundary*/
+  *output_stride = layer->output_dimensions.width * layer->output_dimensions.byte_width; // output will be packed
+  *output_can_overwrite_input = false;  
+  *scratch_mem_needed_size = 0; 
+  *min_required_driver_version = NRF_AXON_GENERATE_VERSION(1,2,0);
+
+}
+
+static nrf_axon_compiler_result_e resize_nearest_neighbor_layer_compile(
+  const nrf_axon_nn_model_layer_desc_s *layer, /*< information on the layer (dimensions, data widths, etc)*/
+  const nrf_axon_nn_model_layer_suppl_s *layer_supplement,
+  const int8_t *input1_ptr,
+  const int8_t *input2_ptr,
+  const int8_t *scratch_mem_ptr,
+  const int8_t *output_ptr,
+  bool input1_is_fully_connected
+) 
+{
+  nrf_axon_nn_op_extension_resize_nearest_neighbor_args_s args = {0};
+
+  args.ptr_args.input = (int8_t*)input1_ptr;
+  args.ptr_args.output = (int8_t*)output_ptr;
+
+  args.remaining_args.input_height = layer->input_dimensions[0].height;
+  args.remaining_args.input_width = layer->input_dimensions[0].width;
+  args.remaining_args.input_channel_cnt = layer->input_dimensions[0].channel_cnt;
+  
+  args.remaining_args.output_height = layer->output_dimensions.height;
+  args.remaining_args.output_width = layer->output_dimensions.width;
+  args.remaining_args.output_channel_cnt = layer->output_dimensions.channel_cnt;
+
+  args.remaining_args.align_corners = layer->cpu_op_additional_attributes_count > 0 ? layer->cpu_op_additional_attributes.ptr[0] : false;
+  args.remaining_args.half_pixel_centers = layer->cpu_op_additional_attributes_count > 1 ? layer->cpu_op_additional_attributes.ptr[1] : false;
+  // only 8bit output is supported
+  if (layer->output_dimensions.byte_width != 1) {
+    nrf_axon_platform_printf("ERROR: INVALID RESIZE_NEAREST_NEIGHBOR OUTPUT BYTEWIDTH %d; ONLY BYTEWIDTH 1 IS SUPPORTED!\n", layer->output_dimensions.byte_width);
+    return NRF_AXON_COMPILER_RESULT_INVALID_OUTPUT_SIZE;
+  }
+
+  args.remaining_args.input_stride = layer_supplement->inputs[0].stride;
+    
+  // tanh is implemented by the cpu in function nrf_axon_nn_op_extension_tanh
+  return nrf_axon_nn_cmd_buff_add_software_op(
+                        nrf_axon_nn_op_extension_resize_nearest_neighbor, /**< address of function to invoke */
+                        "nrf_axon_nn_op_extension_resize_nearest_neighbor", /** < name of function to invoke. This is the symbol name that will be placed in the compiled output. */
+                        sizeof (args.ptr_args)/sizeof(void *), /**< number of pointer arguments in ptr_argv */
+                        sizeof(args.remaining_args), /**< size in bytes of remaining_args */
+                        (NRF_AXON_PLATFORM_BITWIDTH_SIGNED_TYPE *)&args.ptr_args, /**< actual arguments to pass to the software function */
+                        &args.remaining_args); 
+}
+
+ /*
  * The list of op exension compiler functions. 
  */
 static nrf_axon_nn_op_extension_compiler_s axon_nn_op_extension_compilers[] = {
@@ -276,6 +348,7 @@ static nrf_axon_nn_op_extension_compiler_s axon_nn_op_extension_compilers[] = {
   NRF_AXON_NN_OP_EXTENSIONS_DECLARE_OP_COMPILER_SYMBOL(NRF_AXON_NN_OP_SIGMOID, "sigmoid", sigmoid_mem_usage, sigmoid_layer_compile),
   NRF_AXON_NN_OP_EXTENSIONS_DECLARE_OP_COMPILER_SYMBOL(NRF_AXON_NN_OP_TANH, "tanh", tanh_mem_usage, tanh_layer_compile),
   NRF_AXON_NN_OP_EXTENSIONS_DECLARE_OP_COMPILER_SYMBOL(NRF_AXON_NN_OP_RESHAPE, "reshape", reshape_mem_usage, reshape_layer_compile),
+  NRF_AXON_NN_OP_EXTENSIONS_DECLARE_OP_COMPILER_SYMBOL(NRF_AXON_NN_OP_RESIZE_NEAREST_NEIGHBOR, "resize_nearest_neighbor", resize_nearest_neighbor_mem_usage, resize_nearest_neighbor_layer_compile),
 };
 
 /*

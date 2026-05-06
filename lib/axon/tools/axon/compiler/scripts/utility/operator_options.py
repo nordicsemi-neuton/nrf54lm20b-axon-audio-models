@@ -1071,6 +1071,34 @@ class ConvolutionOptions(OperatorOptions):
             filter_shape.height, filter_shape.width, filter_constraint, transpose_check=transpose_check)
         return io_error_txt + filter_error_text
 
+    def set_flag_if_previous_op_is_pad(self, operator_graph, previous_op_index):
+        if operator_graph[previous_op_index]['op_name'] == "PAD":
+            previous_pad_op = operator_graph[previous_op_index]
+            # get the padding details
+            self.ops_ip_shape = TensorShape(np.array(
+                previous_pad_op['operator_options'].GetInputShapes()[0]))  # only the input shape
+            self.pad_info = copy.deepcopy(
+                previous_pad_op['operator_options'].GetOperationPaddings())
+            self.previous_pad = True
+        return self.previous_pad 
+
+    def check_for_pad_before_convolution(self, operator_graph, operator_graph_info, current_op_ndx):
+        previous_op_index = SupportedOperators.get_index_from_tf_index(
+            operator_graph, operator_graph_info['index']-1)
+        previous_valid_axon_op_ndx = self.get_previous_valid_axon_operator_index(
+                operator_graph, current_op_ndx)
+        if previous_op_index == 0 :
+            self.set_flag_if_previous_op_is_pad(operator_graph,previous_op_index)
+        elif previous_valid_axon_op_ndx is not None:
+            if self.ip_shape != operator_graph[previous_valid_axon_op_ndx]['operator_options'].op_shape:
+                for i in range(previous_op_index, previous_valid_axon_op_ndx, -1) :
+                    if self.set_flag_if_previous_op_is_pad(operator_graph,i) :
+                        break
+        elif previous_valid_axon_op_ndx is None:
+            if self.ip_shape != operator_graph[previous_op_index]['operator_options'].op_shape:
+                    for i in range(previous_op_index, 0, -1) :
+                        if self.set_flag_if_previous_op_is_pad(operator_graph,i) :
+                            break
 
 class Conv2dOperatorOptions(ConvolutionOptions):
     multi_channel_input_convolution = False
@@ -1080,7 +1108,7 @@ class Conv2dOperatorOptions(ConvolutionOptions):
     @classmethod
     def get_conv_operator_tflite_options(cls):
         return tflite.Conv2DOptions()
-
+      
     def __init__(self, operator_code, operator, operation_detail, tensor_details, tflite_interpreter, operator_graph, tflite_axon_enum_wrapper):
         self.InitOperatorOption(operator_code, operator, operation_detail,
                                 tensor_details, tflite_interpreter, operator_graph, tflite_axon_enum_wrapper)
@@ -1112,34 +1140,7 @@ class Conv2dOperatorOptions(ConvolutionOptions):
         if operator_graph is not None:
             current_op_ndx = operation_detail['index']
             operator_graph_info = operator_graph[operation_detail['index']]
-            previous_op_index = SupportedOperators.get_index_from_tf_index(
-                operator_graph, operator_graph_info['index']-1)
-            if previous_op_index > 0:  # not the first operation
-                previous_valid_axon_op_ndx = self.get_previous_valid_axon_operator_index(
-                    operator_graph, current_op_ndx)
-                if previous_valid_axon_op_ndx is not None:
-                    if self.ip_shape != operator_graph[previous_valid_axon_op_ndx]['operator_options'].op_shape:
-                        # which means we might have to find out why is there a change in shape?
-                        # because of a reshape or some other operator
-                        for i in range(previous_op_index, previous_valid_axon_op_ndx, -1):
-                            # find if PAD is present, just once
-                            if operator_graph[i]['op_name'] == "PAD":
-                                previous_pad_op = operator_graph[i]
-                                # get the padding details
-                                self.ops_ip_shape = TensorShape(np.array(
-                                    previous_pad_op['operator_options'].GetInputShapes()[0]))  # only the input shape
-                                self.pad_info = copy.deepcopy(
-                                    previous_pad_op['operator_options'].GetOperationPaddings())
-                                self.previous_pad = True
-                                break
-                            # previous_op = operator_graph[previous_op_index]
-                            # if previous_op['op_name']=="PAD": #straight up check if there is a pad in the previous operator
-                            #   #get the padding details
-                            #   self.ops_ip_shape = TensorShape(np.array(previous_op['operator_options'].GetInputShapes()[0])) #only the input shape
-                            #   self.pad_info = copy.deepcopy(previous_op['operator_options'].GetOperationPaddings())
-                            #   self.previous_pad=True
-                            #   #check if the previous op output shape matches with the current ip shape
-
+            self.check_for_pad_before_convolution(operator_graph, operator_graph_info, current_op_ndx)
         # get the filter and bias tensor
         self.filter_tensor = tflite_interpreter.get_tensor(self.ip_ndxs[1])
         self.bias_tensor = tflite_interpreter.get_tensor(self.ip_ndxs[2])
@@ -1295,18 +1296,9 @@ class DepthwiseConv2DOperatorOptions(ConvolutionOptions):
         self.CalculatePadding()
         # figure out if the previous operation is a PAD operation and if yes try to update the padding information accordingly
         if operator_graph is not None:
+            current_op_ndx = operation_detail['index']
             operator_graph_info = operator_graph[operation_detail['index']]
-            previous_op_index = SupportedOperators.get_index_from_tf_index(
-                operator_graph, operator_graph_info['index']-1)
-            if previous_op_index > 0:  # not the first operation
-                previous_op = operator_graph[previous_op_index]
-                if previous_op['op_name'] == "PAD":
-                    # get the padding details
-                    self.ops_ip_shape = TensorShape(np.array(
-                        previous_op['operator_options'].GetInputShapes()[0]))  # only the input shape
-                    self.pad_info = previous_op['operator_options'].GetOperationPaddings(
-                    )
-                    self.previous_pad = True
+            self.check_for_pad_before_convolution(operator_graph, operator_graph_info, current_op_ndx)
         # get the filter and bias tensor
         self.filter_tensor = tflite_interpreter.get_tensor(self.ip_ndxs[1])
         self.bias_tensor = tflite_interpreter.get_tensor(self.ip_ndxs[2])
@@ -2918,14 +2910,14 @@ class SupportedOperators():
             self.supported_operators[code] = CpuOperatorOptions
 
     def find_last_supported_operation_output(self, operation_list, subgraph, model):
-        last_layer_ndx = -1
+        last_layer_ndx = [-1]
         for i in range(len(operation_list)):
             operators = subgraph.Operators(i)
             operation_code = model.OperatorCodes(
                 (operators.OpcodeIndex())).BuiltinCode()
             if (operation_code in self.supported_operators):
                 last_layer_ndx = i
-        return last_layer_ndx
+        return [last_layer_ndx]
 
     def find_last_supported_operator_ndx(self, op_graph):
         last_layer_ndx = -1
@@ -3374,10 +3366,14 @@ class SupportedOperators():
 
     def get_axon_layer_num_of_output_operator(self):
         if len(self.nodes_info['op_graph']) == 1:
-            return 0, 0
+            return [0], [0]
+        axon_layer_num = []
+        layer_ndx = []
         for ndx, node in enumerate(self.nodes_info['op_graph']):
             if node['axon_op_ops'] == [] and node['axon_layer_num'] >= 0:
-                return node['axon_layer_num'], ndx
+                axon_layer_num.append(node['axon_layer_num'])
+                layer_ndx.append(ndx)
+        return axon_layer_num, layer_ndx
 
     def get_axon_layer_num_of_input_operator(self):
         for ndx, node in enumerate(self.nodes_info['op_graph']):
@@ -3525,6 +3521,7 @@ class TfLiteAxonGraph(SupportedOperators):
     model_support_info_dict = None
     model_input_operator_name = None
     model_output_operator_name = None
+    multiple_output_model = None
 
     def __init__(self, tflite_filename):
         self.operator_graph_info = None
@@ -3552,6 +3549,11 @@ class TfLiteAxonGraph(SupportedOperators):
         self.tflite_graph_dict['interpreter'] = tf.lite.Interpreter(
             model_path=tflite_filename, experimental_preserve_all_tensors=True)
         self.tflite_graph_dict['interpreter'].allocate_tensors()
+        
+        self.multiple_output_model = len(self.get_tflite_output_details()) > 1
+
+    def is_tflite_model_multiple_output(self):
+        return self.multiple_output_model
 
     def get_tflite_graph_dict(self):
         return self.tflite_graph_dict
@@ -3661,9 +3663,39 @@ class TfLiteAxonGraph(SupportedOperators):
                 return node
 
     def get_axon_output_op_graph_details(self):
-        op_graph = self.get_axon_operator_graph_info()
+        op_graph = self.get_axon_operator_graph_info()        
         if len(op_graph) == 1:
-            return op_graph[0]
+            return [op_graph[0]]
+        axon_output_graph_details = []
         for ndx, node in enumerate(op_graph):
-            if node['axon_op_ops'] == [] and node['axon_layer_num'] >= 0:
-                return node
+            if node['axon_op_ops'] == [] and node['axon_layer_num'] >= 0:                
+                #map the tflite output to the axon graph detail
+                axon_output_graph_details.append(node)
+        return axon_output_graph_details
+    
+    def get_tflite_axon_output_details_mapping(self):
+        #we need to map the tflite output details with the axon output op graph details
+        tflite_output_details = self.get_tflite_output_details()
+        tflite_output_indices = []
+        tflite_output_detail_copy = []
+        for op_details in tflite_output_details :
+            tflite_output_indices.append(op_details['index'])
+            tflite_output_detail_copy.append(op_details)
+        #we need to sort this array based on the order of occurence in the axon graph.
+        #look up into the operator details
+        tflite_output_nodes = []
+        tflite_output_mapping = {}
+        order = 0
+        for n, nodes in enumerate(self.get_tflite_operator_details()) :
+            if nodes['outputs'].shape[0]!=0 and nodes['outputs'][0] in tflite_output_indices :
+                #this is an output node
+                tflite_output_nodes.append(nodes)
+                location = tflite_output_indices.index(nodes['outputs'][0])
+                tflite_output_mapping[order] = tflite_output_detail_copy[location]
+                order+=1
+        
+        return tflite_output_mapping
+
+
+
+
