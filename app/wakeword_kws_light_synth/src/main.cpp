@@ -13,7 +13,7 @@
 
 //////////////////////////////////////////////////////////////////////////////
 
-#define MODEL_WAKEWORD_LABEL        "Okay Nordic"
+#define MODEL_WAKEWORD_LABEL        "Hey Genie"
 #define KEYWORD_SPOTTING_TIMEOUT_MS 7000
 #define DEMO_FINAL_DETECTIONS_ONLY  0
 #define PRINT_RAW_PROBABILITY       1
@@ -113,7 +113,7 @@ int main()
            libver.field.patch);
 #endif
 
-    nrf_edgeai_t* p_wakeword_model = nrf_edgeai_user_model_92556();
+    nrf_edgeai_t* p_wakeword_model = nrf_edgeai_user_model_93127();
     nrf_edgeai_t* p_kws_model      = nrf_edgeai_user_model_kws();
 
     // Initialize wakeword model
