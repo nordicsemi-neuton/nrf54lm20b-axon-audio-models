@@ -3,6 +3,7 @@
 #include "nrf_edgeai_user_types.h"
 #include <nrf_edgeai/nrf_edgeai_platform.h>
 #include <nrf_edgeai/rt/private/nrf_edgeai_interfaces.h>
+#include <assert.h>
 
 //////////////////////////////////////////////////////////////////////////////
 /* Nordic EdgeAI Lab Solution ID and Runtime Version */
@@ -70,7 +71,7 @@ static const nrf_user_input_t INPUT_FEATURES_SCALE_MAX[] = { 32767 };
 #include <drivers/axon/nrf_axon_nn_infer.h>
 #include <axon/nrf_axon_platform.h>
 #include "nrf_edgeai_user_model_axon.h"
-#define P_MODEL_INSTANCE &model_stream_state_internal_int8_19
+#define P_MODEL_INSTANCE &model_smart_tv
 #else  // MODEL_TYPE == __NRF_EDGEAI_MODEL_NEUTON
 #define P_MODEL_INSTANCE &model_neuton_user_instance_
 #endif
